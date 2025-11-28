@@ -116,7 +116,10 @@ HASH_TO_TRIAGE_ID = {
 
 # Approval相关配置
 APPROVED_REPORTS_DIR = BASE_DIR / "report" / "approved"  # 完成报告目录
-APPROVED_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    APPROVED_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception as e:
+    print(f"⚠️ 无法创建目录 {APPROVED_REPORTS_DIR}: {e}")
 
 # 患者信息数据库（可以从实际数据源读取）
 PATIENT_INFO = {
