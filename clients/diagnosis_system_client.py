@@ -153,7 +153,7 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
     def get_scenario(self, scenario_id: str) -> dict:
         """获取场景详情"""
         payload = {"scenario_id": scenario_id}
-        return self._post("/v1/scenarios/get", payload)
+        return self._post("/scenarios/get", payload)
     
     def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True) -> dict:
         """获取场景聚合"""
@@ -161,14 +161,14 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
             "scenario_id": scenario_id,
             "include_reviews": include_reviews
         }
-        return self._post("/v1/scenarios/bundle", payload)
+        return self._post("/scenarios/bundle", payload)
     
     def get_user_ehr(self, user_id: str, fields: Optional[list[str]] = None) -> dict:
         """获取用户EHR"""
         payload = {"user_id": user_id}
         if fields:
             payload["fields"] = fields
-        return self._post("/v1/users/ehr", payload)
+        return self._post("/users/ehr", payload)
     
     def get_user_signals(self, user_id: str, **kwargs) -> dict:
         """
@@ -197,7 +197,7 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         if "limit" in kwargs:
             payload["limit"] = kwargs["limit"]
         
-        return self._post("/v1/users/signals", payload)
+        return self._post("/users/signals", payload)
     
     def get_user_scenarios(self, user_id: str, **kwargs) -> dict:
         """
@@ -229,5 +229,5 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         if "limit" in kwargs:
             payload["limit"] = kwargs["limit"]
         
-        return self._post("/v1/users/scenarios", payload)
+        return self._post("/users/scenarios", payload)
 

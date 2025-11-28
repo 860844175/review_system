@@ -81,7 +81,7 @@ class SystemClient:
         Raises:
             requests.RequestException: 请求失败时抛出
         """
-        url = f"{self.base_url}/v1/reviews/create"
+        url = f"{self.base_url}/reviews/create"
         
         payload = {
             "user_id": user_id,
