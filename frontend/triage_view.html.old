@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分诊审核页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* 顶部徽章区域 */
+        .header {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .urgency-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .urgency-badge.urgent {
+            background: #ef4444;
+            color: white;
+        }
+
+        .urgency-badge.attention {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .urgency-badge.nonurgent {
+            background: #10b981;
+            color: white;
+        }
+
+        .esi-level {
+            display: inline-block;
+            margin-left: 15px;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .section-content {
+            color: #4b5563;
+        }
+
+        /* 路径分支提示 */
+        .path-indicator {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .path-indicator.immediate {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .path-indicator.home {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        /* 患者信息 */
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        /* 用药列表 */
+        .meds-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .med-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #4f46e5;
+        }
+
+        /* 建议卡片 */
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .suggestion-card {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .suggestion-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4f46e5;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-content {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.8;
+        }
+
+        /* 可能原因列表 */
+        .causes-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .cause-item {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: white;
+            border-radius: 6px;
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 错误提示 */
+        .error {
+            padding: 20px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 8px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        /* 隐藏元素 */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部徽章 -->
+        <div class="header">
+            <div id="urgencyBadge" class="urgency-badge hidden"></div>
+            <span id="esiLevel" class="esi-level hidden"></span>
+            <h1 id="pageTitle" style="margin-top: 15px;">分诊审核</h1>
+        </div>
+
+        <!-- 加载状态 -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>正在加载分诊数据...</p>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="error" class="error hidden"></div>
+
+        <!-- 内容区域 -->
+        <div id="content" class="content hidden">
+            <!-- 路径分支指示 -->
+            <div id="pathIndicator" class="path-indicator hidden"></div>
+
+            <!-- 分诊结论 -->
+            <div class="section">
+                <div class="section-title">📋 分诊结论</div>
+                <div class="section-content">
+                    <div style="margin-bottom: 15px;">
+                        <strong>下一步操作：</strong>
+                        <span id="nextOperation"></span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>判断理由：</strong>
+                        <span id="rationale"></span>
+                    </div>
+                    <div>
+                        <strong>可能原因：</strong>
+                        <ul id="likelyCauses" class="causes-list"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 患者信息 -->
+            <div class="section">
+                <div class="section-title">👤 患者信息</div>
+                <div class="section-content">
+                    <div id="demographics" class="patient-info"></div>
+                    <div style="margin-top: 20px;">
+                        <strong>当前用药：</strong>
+                        <ul id="medsList" class="meds-list"></ul>
+                    </div>
+                    <div id="baselineVitals" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- 信号摘要 -->
+            <div id="signalsSection" class="section hidden">
+                <div class="section-title">📊 信号摘要</div>
+                <div class="section-content">
+                    <p id="summaryText"></p>
+                </div>
+            </div>
+
+            <!-- 建议 -->
+            <div class="section">
+                <div class="section-title">💡 建议</div>
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+
+            <!-- 医生审核区域 -->
+            <div class="section" style="margin-top: 40px; border-left-color: #10b981;">
+                <div class="section-title">✍️ 医生审核</div>
+                <div class="section-content">
+                    <div style="margin-bottom: 20px;">
+                        <label for="doctorComment" style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                            审核意见：
+                        </label>
+                        <textarea 
+                            id="doctorComment" 
+                            placeholder="请输入审核意见..."
+                            style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
+                        ></textarea>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                            是否同意系统分诊结论：
+                        </label>
+                        <select id="doctorAgree" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            <option value="true">同意</option>
+                            <option value="false">不同意</option>
+                        </select>
+                    </div>
+                    <button 
+                        id="submitBtn" 
+                        onclick="submitReview()"
+                        style="width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(16, 185, 129, 0.3)'"
+                        onmouseout="this.style.transform=''; this.style.boxShadow=''"
+                    >
+                        <span id="submitBtnText">提交审核</span>
+                        <span id="submitBtnSpinner" style="display: none;">⏳ 提交中...</span>
+                    </button>
+                    <div id="submitMessage" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从URL获取task_id
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('task_id');
+        const portNumber = window.location.port || '5001';
+
+        // 获取紧急徽章颜色类
+        function getUrgencyBadgeClass(urgencyLevel) {
+            const level = (urgencyLevel || '').toLowerCase();
+            if (level.includes('紧急') || level.includes('urgent') || level.includes('emergent')) {
+                return 'urgent';
+            } else if (level.includes('关注')) {
+                return 'attention';
+            } else {
+                return 'nonurgent';
+            }
+        }
+
+        // 渲染数据
+        function renderViewModel(data) {
+            const triage = data.triage || {};
+            const patient = data.patient || {};
+            const signals = data.signals || {};
+            const suggestions = data.suggestions || {};
+
+            // 显示顶部徽章
+            const urgencyLevel = triage.urgency_level || '';
+            const esiLevel = triage.esi_level;
+            const path = triage.path || 'home';
+
+            if (urgencyLevel) {
+                const badge = document.getElementById('urgencyBadge');
+                badge.textContent = urgencyLevel;
+                badge.className = `urgency-badge ${getUrgencyBadgeClass(urgencyLevel)}`;
+                badge.classList.remove('hidden');
+            }
+
+            if (esiLevel !== null && esiLevel !== undefined) {
+                const esi = document.getElementById('esiLevel');
+                esi.textContent = `ESI ${esiLevel}`;
+                esi.classList.remove('hidden');
+            }
+
+            // 显示路径分支
+            const pathIndicator = document.getElementById('pathIndicator');
+            if (path === 'immediate') {
+                pathIndicator.textContent = '🚨 建议立即就医/急诊处理';
+                pathIndicator.className = 'path-indicator immediate';
+            } else {
+                pathIndicator.textContent = '🏠 居家观察/复查建议';
+                pathIndicator.className = 'path-indicator home';
+            }
+            pathIndicator.classList.remove('hidden');
+
+            // 分诊结论
+            document.getElementById('nextOperation').textContent = triage.next_operation || '暂无';
+            document.getElementById('rationale').textContent = triage.rationale || '暂无';
+
+            // 可能原因
+            const causesList = document.getElementById('likelyCauses');
+            causesList.innerHTML = '';
+            if (triage.likely_causes && triage.likely_causes.length > 0) {
+                triage.likely_causes.forEach(cause => {
+                    const li = document.createElement('li');
+                    li.className = 'cause-item';
+                    li.textContent = cause;
+                    causesList.appendChild(li);
+                });
+            } else {
+                causesList.innerHTML = '<li class="cause-item">暂无</li>';
+            }
+
+            // 患者信息
+            const demographics = document.getElementById('demographics');
+            demographics.innerHTML = '';
+            const demo = patient.demographics || {};
+            if (demo.name) {
+                demographics.innerHTML += `<div class="info-item"><div class="info-label">姓名</div><div class="info-value">${demo.name}</div></div>`;
+            }
+            if (demo.age) {
+                demographics.innerHTML += `<div class="info-item"><div class="info-label">年龄</div><div class="info-value">${demo.age}岁</div></div>`;
+            }
+            if (demo.sex) {
+                demographics.innerHTML += `<div class="info-item"><div class="info-label">性别</div><div class="info-value">${demo.sex}</div></div>`;
+            }
+
+            // 用药列表
+            const medsList = document.getElementById('medsList');
+            medsList.innerHTML = '';
+            if (patient.meds && patient.meds.length > 0) {
+                patient.meds.forEach(med => {
+                    const li = document.createElement('li');
+                    li.className = 'med-item';
+                    const medText = med.name || med.drug_name || '';
+                    const medDose = med.dose || '';
+                    li.textContent = medText + (medDose ? ` - ${medDose}` : '');
+                    medsList.appendChild(li);
+                });
+            } else {
+                medsList.innerHTML = '<li class="med-item">暂无用药记录</li>';
+            }
+
+            // 基线生命体征
+            const baselineVitals = document.getElementById('baselineVitals');
+            baselineVitals.innerHTML = '';
+            const vitals = patient.baseline_vitals || {};
+            if (Object.keys(vitals).length > 0) {
+                let vitalsHtml = '<strong>基线生命体征：</strong><div class="patient-info" style="margin-top: 10px;">';
+                for (const [key, value] of Object.entries(vitals)) {
+                    vitalsHtml += `<div class="info-item"><div class="info-label">${key}</div><div class="info-value">${value}</div></div>`;
+                }
+                vitalsHtml += '</div>';
+                baselineVitals.innerHTML = vitalsHtml;
+            }
+
+            // 信号摘要
+            const signalsSection = document.getElementById('signalsSection');
+            const summaryText = document.getElementById('summaryText');
+            if (signals.summary_text) {
+                summaryText.textContent = signals.summary_text;
+                signalsSection.classList.remove('hidden');
+            } else {
+                signalsSection.classList.add('hidden');
+            }
+
+            // 建议
+            const suggestionsContainer = document.getElementById('suggestions');
+            suggestionsContainer.innerHTML = '';
+
+            // 根据path决定显示哪个建议
+            const suggestionsToShow = path === 'immediate' 
+                ? (suggestions.doctor || [])
+                : (suggestions.patient || []);
+
+            if (suggestionsToShow.length > 0) {
+                suggestionsToShow.forEach((suggestion, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'suggestion-card';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'suggestion-card-title';
+                    title.textContent = path === 'immediate' ? `医生建议 ${index + 1}` : `患者建议 ${index + 1}`;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'suggestion-content';
+                    
+                    const outputJson = suggestion.output_json || '';
+                    if (typeof outputJson === 'string') {
+                        content.textContent = outputJson;
+                    } else if (Array.isArray(outputJson)) {
+                        outputJson.forEach(item => {
+                            if (typeof item === 'string') {
+                                content.innerHTML += `<p>${item}</p>`;
+                            } else if (item.advice) {
+                                item.advice.forEach(advice => {
+                                    content.innerHTML += `<p><strong>${item.category || ''}</strong>: ${advice}</p>`;
+                                });
+                            }
+                        });
+                    }
+                    
+                    card.appendChild(title);
+                    card.appendChild(content);
+                    suggestionsContainer.appendChild(card);
+                });
+            } else {
+                suggestionsContainer.innerHTML = '<div class="suggestion-card"><div class="suggestion-content">暂无建议</div></div>';
+            }
+
+            // 显示内容区域
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        }
+
+        // 加载数据
+        async function loadTriageView() {
+            if (!taskId) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').textContent = '缺少task_id参数';
+                document.getElementById('error').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `http://localhost:${portNumber}/api/diagnosis-system/triage-view/by-task?task_id=${taskId}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || '获取数据失败');
+                }
+
+                renderViewModel(result.data);
+
+            } catch (error) {
+                console.error('加载分诊视图失败:', error);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').textContent = `加载失败: ${error.message}`;
+                document.getElementById('error').classList.remove('hidden');
+            }
+        }
+
+        // 存储当前view model数据（用于提交）
+        let currentViewModel = null;
+
+        // 修改 renderViewModel 函数，保存数据
+        const originalRenderViewModel = renderViewModel;
+        renderViewModel = function(data) {
+            currentViewModel = data;
+            originalRenderViewModel(data);
+        };
+
+        // 提交审核
+        async function submitReview() {
+            if (!taskId) {
+                alert('缺少task_id参数');
+                return;
+            }
+
+            if (!currentViewModel) {
+                alert('数据未加载完成，请稍候再试');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+            const submitMessage = document.getElementById('submitMessage');
+            const doctorComment = document.getElementById('doctorComment').value.trim();
+            const doctorAgree = document.getElementById('doctorAgree').value === 'true';
+
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtnText.style.display = 'none';
+            submitBtnSpinner.style.display = 'inline';
+
+            try {
+                const response = await fetch(`http://localhost:${portNumber}/api/diagnosis-system/triage-review/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        decision: {
+                            final_path: currentViewModel.triage?.path || 'home',
+                            final_esi_level: currentViewModel.triage?.esi_level || null,
+                            doctor_agree_with_system: doctorAgree,
+                            doctor_comment: doctorComment || '无'
+                        },
+                        annotations: []
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    submitMessage.style.display = 'block';
+                    submitMessage.style.background = '#d1fae5';
+                    submitMessage.style.color = '#065f46';
+                    submitMessage.style.border = '1px solid #10b981';
+                    submitMessage.textContent = '✅ 审核提交成功！';
+                    
+                    // 禁用表单
+                    document.getElementById('doctorComment').disabled = true;
+                    document.getElementById('doctorAgree').disabled = true;
+                } else {
+                    throw new Error(result.error || '提交失败');
+                }
+            } catch (error) {
+                console.error('提交审核失败:', error);
+                submitMessage.style.display = 'block';
+                submitMessage.style.background = '#fee2e2';
+                submitMessage.style.color = '#991b1b';
+                submitMessage.style.border = '1px solid #ef4444';
+                submitMessage.textContent = `❌ 提交失败: ${error.message}`;
+                
+                // 恢复按钮
+                submitBtn.disabled = false;
+                submitBtnText.style.display = 'inline';
+                submitBtnSpinner.style.display = 'none';
+            }
+        }
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', loadTriageView);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient List - Chronic Disease Report System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .stats {
+            margin-top: 15px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+
+        .btn-outline:hover {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-outline.active {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .patients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .patient-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .patient-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .patient-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .patient-id {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #64748b;
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .patient-source {
+            font-size: 11px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .status-completed {
+            background: #d1fae5 !important;
+            color: #065f46 !important;
+        }
+
+        .status-pending {
+            background: #fef3c7 !important;
+            color: #92400e !important;
+        }
+
+        .status-no-data {
+            background: #f3f4f6 !important;
+            color: #6b7280 !important;
+        }
+
+        .patient-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .patient-info {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 15px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .patient-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-compliance {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-compliance:hover {
+            background: #059669;
+        }
+
+        .btn-triage {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-triage:hover {
+            background: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .generating-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .generating-overlay.show {
+            display: flex;
+        }
+
+        .generating-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .generating-modal .spinner {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Patient List</h1>
+            <p>Total <span id="totalCount">-</span> patients in the system</p>
+            <div class="stats" id="statsInfo">Loading...</div>
+        </div>
+
+        <div class="content">
+            <!-- Error Alert -->
+            <div id="alert" class="alert">
+                <span id="alertMessage"></span>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search by patient name, ID, or diagnosis...">
+                </div>
+                <div class="filter-buttons">
+                    <button class="btn btn-outline" data-filter="all">All</button>
+                    <button class="btn btn-outline" data-filter="completed">Completed</button>
+                    <button class="btn btn-outline active" data-filter="pending">Pending</button>
+                    <button class="btn btn-outline" data-filter="no_data">No Data</button>
+                </div>
+            </div>
+
+            <!-- Patient List -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading patient data...</p>
+            </div>
+
+            <div id="patientsGrid" class="patients-grid" style="display: none;">
+                <!-- Patient cards will be dynamically generated by JavaScript -->
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <h3>No Patient Data</h3>
+                <p>No matching patient records found</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generation Overlay -->
+    <div id="generatingOverlay" class="generating-overlay">
+        <div class="generating-modal">
+            <div class="spinner"></div>
+            <h3 id="generatingText">Generating Report...</h3>
+            <p id="generatingDetails" style="margin-top: 10px; color: #64748b; font-size: 14px;"></p>
+        </div>
+    </div>
+
+    <script>
+        // Automatically get port number from current page URL
+        let port_number = window.location.port;
+        if (!port_number || port_number === '') {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                port_number = '5001';
+            } else {
+                port_number = window.location.protocol === 'https:' ? '443' : '80';
+            }
+        }
+
+        class PatientListManager {
+            constructor() {
+                this.patients = [];
+                this.filteredPatients = [];
+                this.currentFilter = 'pending';  // Default show pending
+                this.searchTerm = '';
+                
+                this.init();
+            }
+
+            init() {
+                this.loadPatients();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Search box
+                const searchInput = document.getElementById('searchInput');
+                searchInput.addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value.toLowerCase();
+                    this.filterAndRender();
+                });
+
+                // Filter buttons
+                document.querySelectorAll('[data-filter]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilter = e.target.dataset.filter;
+                        this.filterAndRender();
+                    });
+                });
+            }
+
+            async loadPatients() {
+                try {
+                    const response = await fetch(`http://localhost:${port_number}/api/patients?lang=en`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            this.patients = data.patients;
+                            this.filteredPatients = this.patients;
+                            
+                            // Update statistics
+                            document.getElementById('totalCount').textContent = data.total;
+                            this.updateStatsInfo(data);
+                            
+                            // Hide loading state, show list
+                            document.getElementById('loading').style.display = 'none';
+                            this.renderPatients();
+                        } else {
+                            this.showAlert('Failed to load patient list: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } else {
+                        this.showAlert('Unable to connect to server', 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to load patient list:', error);
+                    this.showAlert('Loading failed, please check network connection', 'error');
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }
+
+            updateStatsInfo(data) {
+                const statsInfo = document.getElementById('statsInfo');
+                if (data.total > 0) {
+                    const completedCount = data.patients.filter(p => p.status === 'completed').length;
+                    const pendingCount = data.patients.filter(p => p.status === 'pending').length;
+                    const noDataCount = data.patients.filter(p => p.status === 'no_data').length;
+                    
+                    let statsText = `Completed: ${completedCount} | Pending: ${pendingCount} | No Data: ${noDataCount}`;
+                    statsInfo.textContent = statsText;
+                } else {
+                    statsInfo.textContent = 'No data available';
+                }
+            }
+
+            filterAndRender() {
+                // Apply filters
+                let filtered = this.patients;
+                
+                if (this.currentFilter !== 'all') {
+                    if (this.currentFilter === 'completed') {
+                        // Filter completed
+                        filtered = filtered.filter(p => p.status === 'completed');
+                    } else if (this.currentFilter === 'pending') {
+                        // Filter pending (must have available reports but not completed)
+                        filtered = filtered.filter(p => {
+                            return p.status === 'pending' && 
+                                   p.available_reports && 
+                                   p.available_reports.length > 0;
+                        });
+                    } else if (this.currentFilter === 'no_data') {
+                        // Filter no data
+                        filtered = filtered.filter(p => p.status === 'no_data');
+                    }
+                }
+
+                // Apply search
+                if (this.searchTerm) {
+                    filtered = filtered.filter(p => {
+                        const name = (p.name || '').toLowerCase();
+                        const id = (p.id || '').toLowerCase();
+                        const diagnosis = (p.diagnosis || '').toLowerCase();
+                        return name.includes(this.searchTerm) || 
+                               id.includes(this.searchTerm) || 
+                               diagnosis.includes(this.searchTerm);
+                    });
+                }
+
+                this.filteredPatients = filtered;
+                this.renderPatients();
+            }
+
+            renderPatients() {
+                const grid = document.getElementById('patientsGrid');
+                const emptyState = document.getElementById('emptyState');
+
+                if (this.filteredPatients.length === 0) {
+                    grid.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                grid.style.display = 'grid';
+
+                grid.innerHTML = this.filteredPatients.map(patient => {
+                    // Get available report types
+                    const availableReports = patient.available_reports || [];
+                    const hasAdherence = availableReports.includes('compliance');
+                    const hasTriage = availableReports.includes('triage');
+                    
+                    // Build button HTML
+                    let buttonsHtml = '';
+                    if (hasAdherence) {
+                        buttonsHtml += `
+                            <button class="btn-action btn-compliance" 
+                                    onclick="patientListManager.generateReport('${patient.id}', 'compliance')">
+                                Adherence Report
+                            </button>
+                        `;
+                    }
+                    if (hasTriage) {
+                        buttonsHtml += `
+                            <button class="btn-action btn-triage" 
+                                    onclick="patientListManager.generateReport('${patient.id}', 'triage')">
+                                Triage Report
+                            </button>
+                        `;
+                    }
+                    
+                    // If no reports available, show message
+                    if (!hasAdherence && !hasTriage) {
+                        buttonsHtml = '<div style="color: #64748b; font-size: 12px; padding: 10px; text-align: center;">No reports available</div>';
+                    }
+                    
+                    // Determine status display text and style
+                    const status = patient.status || 'no_data';
+                    let statusText = '';
+                    let statusClass = '';
+                    if (status === 'completed') {
+                        statusText = 'Completed';
+                        statusClass = 'status-completed';
+                    } else if (status === 'pending') {
+                        statusText = 'Pending';
+                        statusClass = 'status-pending';
+                    } else {
+                        statusText = 'No Data';
+                        statusClass = 'status-no-data';
+                    }
+                    
+                    // Display available report types label
+                    const reportsLabel = availableReports.length > 0 
+                        ? availableReports.map(r => r === 'compliance' ? 'Adherence' : r === 'triage' ? 'Triage' : r).join(', ')
+                        : 'None';
+                    
+                    // Display ESI if available (for triage patients)
+                    const esi = patient.esi;
+                    const esiDisplay = esi !== null && esi !== undefined 
+                        ? `<span class="info-label">ESI Level:</span><span style="color: ${esi <= 2 ? '#dc2626' : esi <= 3 ? '#f59e0b' : '#10b981'}; font-weight: 600;">${esi}</span>`
+                        : '';
+                    
+                    return `
+                        <div class="patient-card">
+                            <div class="patient-card-header">
+                                <div class="patient-id">${patient.id.length > 16 ? patient.id.substring(0, 16) + '...' : patient.id}</div>
+                                <div class="patient-source ${statusClass}">${statusText}</div>
+                            </div>
+                            <div class="patient-name">${patient.name}</div>
+                            <div class="patient-info">
+                                <span class="info-label">Age:</span>
+                                <span>${patient.age}${typeof patient.age === 'number' ? '' : ''}</span>
+                                <span class="info-label">Gender:</span>
+                                <span>${patient.gender}</span>
+                                ${esiDisplay}
+                                <span class="info-label">Available Reports:</span>
+                                <span style="color: #4f46e5; font-weight: 600;">${reportsLabel}</span>
+                            </div>
+                            <div class="patient-actions">
+                                ${buttonsHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async generateReport(patientId, reportType) {
+                const reportTypeName = reportType === 'compliance' ? 'Adherence Report' : 'Triage Report';
+                
+                // Show generating overlay
+                const overlay = document.getElementById('generatingOverlay');
+                const generatingText = document.getElementById('generatingText');
+                const generatingDetails = document.getElementById('generatingDetails');
+                
+                generatingText.textContent = `Generating ${reportTypeName}...`;
+                generatingDetails.textContent = `Patient ID: ${patientId.substring(0, 16)}...`;
+                overlay.classList.add('show');
+
+                try {
+                    const response = await fetch(`http://localhost:${port_number}/api/generate-report?lang=en`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            patientId: patientId,
+                            reportType: reportType
+                        })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Report generation response:', result);
+                        if (result.success) {
+                            // Report generated successfully, open it
+                            const reportUrl = `http://localhost:${port_number}${result.reportPath}`;
+                            console.log('Preparing to open report URL:', reportUrl);
+                            
+                            // Try to open new window
+                            try {
+                                const newWindow = window.open(reportUrl, '_blank');
+                                // Check if popup was blocked
+                                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                                    // Popup blocked, show link
+                                    console.warn('Popup blocked, showing link');
+                                    this.showAlert(`✅ ${reportTypeName} generated successfully!`, 'success', reportUrl);
+                                } else {
+                                    // Successfully opened new window
+                                    this.showAlert(`✅ ${reportTypeName} generated successfully! Opening report...`, 'success');
+                                }
+                            } catch (e) {
+                                // Failed to open, show link
+                                console.error('Failed to open report:', e);
+                                this.showAlert(`✅ ${reportTypeName} generated successfully!`, 'success', reportUrl);
+                            }
+                        } else {
+                            this.showAlert(`Generation failed: ${result.error || 'Unknown error'}`, 'error');
+                        }
+                    } else {
+                        const error = await response.json();
+                        console.error('Report generation failed:', error);
+                        this.showAlert(`Generation failed: ${error.error || 'Server error'}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to generate report:', error);
+                    this.showAlert('Generation failed, please check network connection', 'error');
+                } finally {
+                    // Hide generating overlay
+                    overlay.classList.remove('show');
+                }
+            }
+
+            showAlert(message, type, linkUrl = null) {
+                const alert = document.getElementById('alert');
+                const alertMessage = document.getElementById('alertMessage');
+                
+                // If there's a link, display as clickable link
+                if (linkUrl) {
+                        alertMessage.innerHTML = `${message} <a href="${linkUrl}" target="_blank" style="color: inherit; text-decoration: underline; font-weight: bold; margin-left: 8px;">Click to open report →</a>`;
+                } else {
+                    alertMessage.textContent = message;
+                }
+                
+                alert.className = `alert alert-${type} show`;
+                
+                // If there's a link, extend display time to 10 seconds
+                const timeout = linkUrl ? 10000 : 3000;
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                }, timeout);
+            }
+        }
+
+        // Initialize
+        let patientListManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            patientListManager = new PatientListManager();
+        });
+    </script>
+</body>
+</html>
+
+
+

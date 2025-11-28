@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分诊审核 - MediAssist</title>
+    
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- 引入 Babel 用于解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 字体配置 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8;
+        }
+        /* 模拟手写签名 */
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+        .font-handwriting {
+            font-family: 'Dancing Script', cursive;
+        }
+    </style>
+</head>
+<body class="bg-slate-50/50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 图标组件定义 (Lucide Icons) ---
+        const IconWrapper = ({ size = 24, className, children, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Activity = (props) => <IconWrapper {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconWrapper>;
+        const User = (props) => <IconWrapper {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconWrapper>;
+        const FileText = (props) => <IconWrapper {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></IconWrapper>;
+        const MessageSquare = (props) => <IconWrapper {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></IconWrapper>;
+        const AlertCircle = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconWrapper>;
+        const CheckCircle2 = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconWrapper>;
+        const Edit3 = (props) => <IconWrapper {...props}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></IconWrapper>;
+        const Stethoscope = (props) => <IconWrapper {...props}><path d="M4.8 2.3A.3.3 0 0 0 5 2.5h3.5a.3.3 0 0 0 .2-.2l.1-1a.3.3 0 0 0-.3-.3H5.1a.3.3 0 0 0-.3.3l0 1ZM6.5 2.5V7a5.5 5.5 0 0 0 10.8 2l.2-1a.3.3 0 0 0-.3-.3h-3.5a.3.3 0 0 0-.3.3l.1 1a3.5 3.5 0 0 1-6.8 0V2.5"/><path d="M12 19.5v-7"/><path d="M9 19.5a3 3 0 1 0 6 0"/></IconWrapper>;
+        const ChevronRight = (props) => <IconWrapper {...props}><path d="m9 18 6-6-6-6"/></IconWrapper>;
+        const Clock = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>;
+        const Heart = (props) => <IconWrapper {...props}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></IconWrapper>;
+        const Pill = (props) => <IconWrapper {...props}><rect x="8" y="2" width="8" height="20" rx="4"/><path d="M8 12h8"/></IconWrapper>;
+        const TrendingUp = (props) => <IconWrapper {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconWrapper>;
+
+        // --- 顶部导航栏 ---
+        const Header = ({ taskId }) => (
+            <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+                <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
+                    {/* 左侧：Logo 与 面包屑 */}
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2.5">
+                            <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-md shadow-blue-600/20">
+                                <Activity size={20} />
+                            </div>
+                            <span className="font-bold text-slate-800 text-lg tracking-tight">MediAssist</span>
+                        </div>
+
+                        <div className="h-6 w-px bg-slate-200"></div>
+
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <span className="px-2 py-1 bg-slate-100 rounded text-slate-600 font-medium">分诊审核</span>
+                            {taskId && (
+                                <>
+                                    <ChevronRight size={14} className="text-slate-300" />
+                                    <span className="font-mono text-slate-400">{taskId}</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 右侧：用户信息 */}
+                    <div className="flex items-center gap-3 pl-2">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-xs font-bold text-slate-700">审核医师</p>
+                            <p className="text-[10px] text-slate-400 uppercase">Reviewer</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
+                            DR
+                        </div>
+                    </div>
+                </div>
+            </header>
+        );
+
+        // --- 生理指标表格组件（紧凑版） ---
+        const VitalSignsTable = ({ vitals, signals, isUrgent }) => {
+            // 格式化血压
+            const formatBloodPressure = (bp) => {
+                if (typeof bp === 'object' && bp !== null) {
+                    const systolic = bp['收缩压'] || bp['systolic'] || bp['收缩'];
+                    const diastolic = bp['舒张压'] || bp['diastolic'] || bp['舒张'];
+                    if (systolic && diastolic) {
+                        return `${systolic}/${diastolic}`;
+                    }
+                }
+                return bp || '--';
+            };
+
+            // 获取当前值和基线值
+            const getCurrentValue = (key, signalsKey) => {
+                if (signalsKey && signals.metrics && signals.metrics[signalsKey]) {
+                    const val = signals.metrics[signalsKey].mean || signals.metrics[signalsKey];
+                    return typeof val === 'number' ? Math.round(val * 10) / 10 : val;
+                }
+                return vitals[key] || vitals[signalsKey] || '--';
+            };
+
+            // 计算趋势
+            const getTrend = (current, baseline) => {
+                if (!current || !baseline || current === '--' || baseline === '--') return null;
+                const curr = typeof current === 'number' ? current : parseFloat(current);
+                const base = typeof baseline === 'number' ? baseline : parseFloat(baseline);
+                if (isNaN(curr) || isNaN(base)) return null;
+                const change = Math.abs((curr - base) / base);
+                if (change < 0.05) return 'stable';
+                return curr > base ? 'up' : 'down';
+            };
+
+            const indicators = [
+                {
+                    label: '血压',
+                    current: signals.metrics?.blood_pressure 
+                        ? `${Math.round(signals.metrics.blood_pressure.systolic?.mean || signals.metrics.blood_pressure.systolic)}/${Math.round(signals.metrics.blood_pressure.diastolic?.mean || signals.metrics.blood_pressure.diastolic)}`
+                        : formatBloodPressure(vitals['血压'] || vitals['blood_pressure']),
+                    baseline: formatBloodPressure(vitals['血压'] || vitals['blood_pressure']),
+                    unit: 'mmHg',
+                    trend: getTrend(
+                        signals.metrics?.blood_pressure?.systolic?.mean || signals.metrics?.blood_pressure?.systolic,
+                        vitals['血压']?.['收缩压'] || vitals['血压']?.['systolic'] || vitals['blood_pressure']?.['systolic']
+                    )
+                },
+                {
+                    label: '心率',
+                    current: getCurrentValue('心率', 'heart_rate') || getCurrentValue('heart_rate', null) || getCurrentValue('心率(次/分)', null),
+                    baseline: vitals['心率'] || vitals['heart_rate'] || vitals['心率(次/分)'] || '--',
+                    unit: 'bpm',
+                    trend: getTrend(
+                        signals.metrics?.heart_rate?.mean || signals.metrics?.heart_rate,
+                        vitals['心率'] || vitals['heart_rate'] || vitals['心率(次/分)']
+                    )
+                },
+                {
+                    label: '血氧',
+                    current: signals.metrics?.spo2?.mean || vitals['血氧'] || vitals['spo2'] || vitals['血氧饱和度'] || '--',
+                    baseline: vitals['血氧'] || vitals['spo2'] || vitals['血氧饱和度'] || '--',
+                    unit: '%',
+                    trend: getTrend(
+                        signals.metrics?.spo2?.mean,
+                        vitals['血氧'] || vitals['spo2'] || vitals['血氧饱和度']
+                    )
+                },
+                {
+                    label: '体温',
+                    current: signals.metrics?.temperature?.mean 
+                        ? (Math.round(signals.metrics.temperature.mean * 10) / 10)
+                        : (vitals['体温'] || vitals['temperature'] || vitals['体温(℃)'] || '--'),
+                    baseline: vitals['体温'] || vitals['temperature'] || vitals['体温(℃)'] || '--',
+                    unit: '℃',
+                    trend: getTrend(
+                        signals.metrics?.temperature?.mean,
+                        vitals['体温'] || vitals['temperature'] || vitals['体温(℃)']
+                    )
+                }
+            ].filter(ind => ind.current !== '--' || ind.baseline !== '--');
+
+            return (
+                <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <table className="w-full text-xs">
+                        <thead className="bg-slate-50">
+                            <tr>
+                                <th className="px-3 py-1.5 text-left font-semibold text-slate-600 text-[10px] uppercase">指标</th>
+                                <th className="px-3 py-1.5 text-right font-semibold text-slate-600 text-[10px] uppercase">当前值</th>
+                                <th className="px-3 py-1.5 text-right font-semibold text-slate-600 text-[10px] uppercase">基线值</th>
+                                <th className="px-3 py-1.5 text-center font-semibold text-slate-600 text-[10px] uppercase">趋势</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {indicators.map((ind, idx) => {
+                                const trendIcon = ind.trend === 'up' ? '↑' : ind.trend === 'down' ? '↓' : '→';
+                                const trendColor = ind.trend === 'up' ? 'text-red-500' : ind.trend === 'down' ? 'text-blue-500' : 'text-slate-400';
+                                return (
+                                    <tr key={idx} className="border-t border-slate-100 hover:bg-slate-50/50">
+                                        <td className="px-3 py-2 font-medium text-slate-700">{ind.label}</td>
+                                        <td className="px-3 py-2 text-right font-semibold text-slate-900">
+                                            {ind.current}{ind.unit}
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-slate-500">
+                                            {ind.baseline}{ind.unit}
+                                        </td>
+                                        <td className="px-3 py-2 text-center">
+                                            {ind.trend && (
+                                                <span className={`font-bold ${trendColor}`} title={ind.trend === 'up' ? '上升' : ind.trend === 'down' ? '下降' : '稳定'}>
+                                                    {trendIcon}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        };
+
+        // --- 信息卡片组件 ---
+        const InfoCard = ({ title, icon: Icon, children, urgent = false }) => (
+            <div className={`rounded-lg p-4 transition-all ${urgent ? 'bg-rose-50/50 border border-rose-100' : 'bg-white border border-slate-200'}`}>
+                <div className="flex items-center gap-2 mb-3">
+                    {Icon && <Icon size={18} className={urgent ? 'text-rose-600' : 'text-blue-600'} />}
+                    <h4 className={`text-sm font-bold ${urgent ? 'text-rose-700' : 'text-slate-700'}`}>
+                        {title}
+                    </h4>
+                </div>
+                <div className="text-sm text-slate-600 leading-relaxed">
+                    {children}
+                </div>
+            </div>
+        );
+
+        // --- 主应用组件 ---
+        function TriageReviewApp() {
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [data, setData] = useState(null);
+            const [doctorComment, setDoctorComment] = useState('');
+            const [doctorAgree, setDoctorAgree] = useState('true');
+            const [submitting, setSubmitting] = useState(false);
+            const [submitMessage, setSubmitMessage] = useState(null);
+
+            // 从URL获取task_id
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get('task_id');
+
+            // 加载数据
+            useEffect(() => {
+                if (!taskId) {
+                    setError('缺少task_id参数');
+                    setLoading(false);
+                    return;
+                }
+
+                // 获取端口号，如果没有则使用默认值5001
+                const portNumber = window.location.port || (window.location.protocol === 'https:' ? '443' : '5001');
+                // 构建API基础URL
+                const apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:${portNumber}`;
+
+                const loadData = async () => {
+                    try {
+                        const response = await fetch(
+                            `${apiBaseUrl}/api/diagnosis-system/triage-view/by-task?task_id=${taskId}`
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const result = await response.json();
+
+                        if (!result.success) {
+                            throw new Error(result.error || '获取数据失败');
+                        }
+
+                        setData(result.data);
+                    } catch (err) {
+                        console.error('加载分诊视图失败:', err);
+                        setError(`加载失败: ${err.message}`);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                loadData();
+            }, [taskId]);
+
+            // 提交审核
+            const handleSubmit = async () => {
+                if (!taskId || !data) {
+                    alert('数据未加载完成，请稍候再试');
+                    return;
+                }
+
+                setSubmitting(true);
+                setSubmitMessage(null);
+
+                // 获取端口号，如果没有则使用默认值5001
+                const portNumber = window.location.port || (window.location.protocol === 'https:' ? '443' : '5001');
+                // 构建API基础URL
+                const apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:${portNumber}`;
+
+                try {
+                    const response = await fetch(`${apiBaseUrl}/api/diagnosis-system/triage-review/submit`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            task_id: taskId,
+                            decision: {
+                                final_path: data.triage?.path || 'home',
+                                final_esi_level: data.triage?.esi_level || null,
+                                doctor_agree_with_system: doctorAgree === 'true',
+                                doctor_comment: doctorComment || '无'
+                            },
+                            annotations: []
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        setSubmitMessage({ type: 'success', text: '✅ 审核提交成功！' });
+                        // 禁用表单
+                        document.getElementById('doctorComment').disabled = true;
+                        document.getElementById('doctorAgree').disabled = true;
+                    } else {
+                        throw new Error(result.error || '提交失败');
+                    }
+                } catch (err) {
+                    console.error('提交审核失败:', err);
+                    setSubmitMessage({ type: 'error', text: `❌ 提交失败: ${err.message}` });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-slate-50/50">
+                        <Header taskId={taskId} />
+                        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+                            <div className="text-center">
+                                <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                                <p className="text-slate-600">正在加载分诊数据...</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="min-h-screen bg-slate-50/50">
+                        <Header taskId={taskId} />
+                        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-6 max-w-md">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <AlertCircle size={20} className="text-rose-600" />
+                                    <h3 className="font-bold text-rose-800">加载失败</h3>
+                                </div>
+                                <p className="text-rose-700">{error}</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const triage = data.triage || {};
+            const patient = data.patient || {};
+            const signals = data.signals || {};
+            const suggestions = data.suggestions || {};
+
+            const urgencyLevel = triage.urgency_level || '';
+            const esiLevel = triage.esi_level;
+            const path = triage.path || 'home';
+            const isUrgent = path === 'immediate' || (esiLevel !== null && esiLevel <= 3);
+
+            const demographics = patient.demographics || {};
+            const vitals = patient.baseline_vitals || {};
+
+            // 获取紧急徽章颜色
+            const getUrgencyBadgeClass = (level) => {
+                const l = (level || '').toLowerCase();
+                if (l.includes('紧急') || l.includes('urgent') || l.includes('emergent')) {
+                    return 'bg-rose-600';
+                } else if (l.includes('关注')) {
+                    return 'bg-amber-500';
+                } else {
+                    return 'bg-emerald-600';
+                }
+            };
+
+            // 根据path决定显示哪个建议
+            const suggestionsToShow = path === 'immediate' 
+                ? (suggestions.doctor || [])
+                : (suggestions.patient || []);
+
+            // 格式化血压显示
+            const formatBloodPressure = (bp) => {
+                if (typeof bp === 'object' && bp !== null) {
+                    const systolic = bp['收缩压'] || bp['systolic'] || bp['收缩'];
+                    const diastolic = bp['舒张压'] || bp['diastolic'] || bp['舒张'];
+                    if (systolic && diastolic) {
+                        return `${systolic}/${diastolic}`;
+                    }
+                }
+                return bp;
+            };
+
+            // 获取患者姓名（可能在不同字段）
+            const patientName = demographics['姓名'] || demographics['name'] || demographics['患者姓名'] || '患者';
+            const patientAge = demographics['年龄'] || demographics['age'];
+            const patientSex = demographics['性别'] || demographics['sex'];
+
+            return (
+                <div className="min-h-screen bg-slate-50/50 font-sans text-slate-800">
+                    <Header taskId={taskId} />
+
+                    <main className="max-w-[1600px] mx-auto p-6">
+                        <div className="flex flex-col lg:flex-row gap-6">
+                            
+                            {/* --- 左侧主要区域 --- */}
+                            <div className="flex-1 flex flex-col min-w-0 gap-5">
+                                
+                                {/* 1. 患者信息头 */}
+                                <div className="bg-white px-6 py-5 rounded-2xl border border-slate-200 shadow-sm shrink-0 flex flex-col xl:flex-row justify-between xl:items-center gap-6">
+                                    <div className="flex items-start gap-5">
+                                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 border-4 border-slate-50 shadow-inner">
+                                            <User size={32} />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-3">
+                                                <h2 className="text-2xl font-bold text-slate-900">
+                                                    {patientName}
+                                                </h2>
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    {patientSex && (
+                                                        <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-slate-600">
+                                                            {patientSex}
+                                                        </span>
+                                                    )}
+                                                    {patientAge && (
+                                                        <span className="px-2 py-0.5 bg-slate-100 rounded-md font-semibold text-slate-600">
+                                                            {patientAge}岁
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
+                                                {urgencyLevel && (
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-white font-semibold ${getUrgencyBadgeClass(urgencyLevel)}`}>
+                                                        <AlertCircle size={14} />
+                                                        <span>{urgencyLevel}</span>
+                                                    </span>
+                                                )}
+                                                {esiLevel !== null && esiLevel !== undefined && (
+                                                    <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">
+                                                        ESI {esiLevel}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="w-full max-w-md">
+                                        <VitalSignsTable vitals={vitals} signals={signals} isUrgent={isUrgent} />
+                                    </div>
+                                </div>
+
+                                {/* 2. 路径分支指示 */}
+                                {path && (
+                                    <div className={`px-4 py-3 rounded-xl font-semibold ${
+                                        path === 'immediate' 
+                                            ? 'bg-rose-50 text-rose-800 border border-rose-200' 
+                                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                    }`}>
+                                        {path === 'immediate' ? '🚨 建议立即就医/急诊处理' : '🏠 居家观察/复查建议'}
+                                    </div>
+                                )}
+
+                                {/* 3. 分诊结论 */}
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="bg-blue-100 p-1.5 rounded text-blue-600">
+                                            <FileText size={18} />
+                                        </div>
+                                        <h3 className="font-bold text-slate-800">分诊结论</h3>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <InfoCard title="下一步操作">
+                                            <p className="font-medium text-slate-800">
+                                                {triage.next_operation || '暂无'}
+                                            </p>
+                                        </InfoCard>
+
+                                        <InfoCard title="判断理由">
+                                            <p>{triage.rationale || '暂无'}</p>
+                                        </InfoCard>
+
+                                        {triage.likely_causes && triage.likely_causes.length > 0 && (
+                                            <InfoCard title="可能原因">
+                                                <ul className="space-y-2">
+                                                    {triage.likely_causes.map((cause, idx) => (
+                                                        <li key={idx} className="flex items-center gap-2">
+                                                            <CheckCircle2 size={14} className="text-blue-500 shrink-0" />
+                                                            <span>{cause}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </InfoCard>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 4. 患者详细信息 */}
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <User size={18} className="text-blue-600" />
+                                        <h3 className="font-bold text-slate-800">患者信息</h3>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {/* 用药列表 */}
+                                        {patient.meds && patient.meds.length > 0 && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                                    <Pill size={16} className="text-slate-500" />
+                                                    当前用药
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {patient.meds.map((med, idx) => {
+                                                        // 处理med可能是字符串或对象的情况
+                                                        const medName = typeof med === 'string' 
+                                                            ? med 
+                                                            : (med.name || med.drug_name || med['药品名称'] || '');
+                                                        const medDose = typeof med === 'object' && med.dose ? med.dose : null;
+                                                        return (
+                                                            <li key={idx} className="px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                                                                <span className="font-medium">{medName}</span>
+                                                                {medDose && <span className="text-slate-500 ml-2">- {medDose}</span>}
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {/* 信号摘要 */}
+                                        {signals.summary_text && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                                    <TrendingUp size={16} className="text-slate-500" />
+                                                    信号摘要
+                                                </h4>
+                                                <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                                    {signals.summary_text}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 5. 建议 */}
+                                {suggestionsToShow.length > 0 && (
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Heart size={18} className="text-blue-600" />
+                                            <h3 className="font-bold text-slate-800">建议</h3>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {suggestionsToShow.map((suggestion, index) => {
+                                                const outputJson = suggestion.output_json || '';
+                                                let content = '';
+                                                
+                                                if (typeof outputJson === 'string') {
+                                                    content = outputJson;
+                                                } else if (Array.isArray(outputJson)) {
+                                                    content = outputJson.map(item => {
+                                                        if (typeof item === 'string') {
+                                                            return item;
+                                                        } else if (item.advice) {
+                                                            return item.advice.map(advice => 
+                                                                `${item.category || ''}: ${advice}`
+                                                            ).join('\n');
+                                                        }
+                                                        return '';
+                                                    }).join('\n');
+                                                }
+                                                
+                                                return (
+                                                    <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div className="text-xs font-semibold text-blue-600 mb-2">
+                                                            {path === 'immediate' ? `医生建议 ${index + 1}` : `患者建议 ${index + 1}`}
+                                                        </div>
+                                                        <div className="text-sm text-slate-700 whitespace-pre-line">
+                                                            {content || '暂无内容'}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 6. 医生审核区域 */}
+                                <div className="bg-white rounded-2xl border-2 border-emerald-200 shadow-sm p-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Stethoscope size={18} className="text-emerald-600" />
+                                        <h3 className="font-bold text-slate-800">医生审核</h3>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                审核意见：
+                                            </label>
+                                            <textarea 
+                                                id="doctorComment"
+                                                value={doctorComment}
+                                                onChange={(e) => setDoctorComment(e.target.value)}
+                                                placeholder="请输入审核意见..."
+                                                className="w-full min-h-[100px] p-3 border-2 border-slate-200 rounded-lg text-sm font-sans resize-y focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                是否同意系统分诊结论：
+                                            </label>
+                                            <select 
+                                                id="doctorAgree"
+                                                value={doctorAgree}
+                                                onChange={(e) => setDoctorAgree(e.target.value)}
+                                                className="w-full p-3 border-2 border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                            >
+                                                <option value="true">同意</option>
+                                                <option value="false">不同意</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={handleSubmit}
+                                            disabled={submitting}
+                                            className="w-full px-6 py-3 bg-slate-900 text-white rounded-lg shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>提交中...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 size={16} />
+                                                    <span>确认并提交</span>
+                                                </>
+                                            )}
+                                        </button>
+                                        
+                                        {submitMessage && (
+                                            <div className={`p-3 rounded-lg text-sm ${
+                                                submitMessage.type === 'success' 
+                                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                            }`}>
+                                                {submitMessage.text}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // 等待 DOM 加载完成后再渲染
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                try {
+                    const rootElement = document.getElementById('root');
+                    if (rootElement) {
+                        const root = ReactDOM.createRoot(rootElement);
+                        root.render(<TriageReviewApp />);
+                    } else {
+                        console.error('Root element not found');
+                    }
+                } catch (error) {
+                    console.error('React render error:', error);
+                    document.getElementById('root').innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <h2 style="color: red;">页面加载错误</h2>
+                            <p>${error.message}</p>
+                            <p style="color: #666; font-size: 12px;">请检查浏览器控制台获取更多信息</p>
+                        </div>
+                    `;
+                }
+            });
+        } else {
+            try {
+                const rootElement = document.getElementById('root');
+                if (rootElement) {
+                    const root = ReactDOM.createRoot(rootElement);
+                    root.render(<TriageReviewApp />);
+                } else {
+                    console.error('Root element not found');
+                }
+            } catch (error) {
+                console.error('React render error:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h2 style="color: red;">页面加载错误</h2>
+                        <p>${error.message}</p>
+                        <p style="color: #666; font-size: 12px;">请检查浏览器控制台获取更多信息</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
