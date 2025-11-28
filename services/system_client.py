@@ -11,8 +11,8 @@ from typing import Optional, Dict, Any
 import requests
 
 from .config import (
-    SYSTEM_BASE_URL,
-    SYSTEM_API_KEY,
+    DIAGNOSIS_SYSTEM_BASE_URL,
+    DIAGNOSIS_SYSTEM_API_KEY,
     MAX_RETRIES,
     RETRY_DELAY
 )
@@ -35,11 +35,11 @@ class SystemClient:
             base_url: 系统模型端基础URL，默认使用配置中的值
             api_key: API密钥，默认使用配置中的值
         """
-        self.base_url = (base_url or SYSTEM_BASE_URL).rstrip('/')
+        self.base_url = (base_url or DIAGNOSIS_SYSTEM_BASE_URL).rstrip('/')
         if not self.base_url:
-            raise ValueError("SYSTEM_BASE_URL 未配置，请设置环境变量或配置")
+            raise ValueError("DIAGNOSIS_SYSTEM_BASE_URL 未配置，请设置环境变量或配置")
         
-        self.api_key = api_key or SYSTEM_API_KEY
+        self.api_key = api_key or DIAGNOSIS_SYSTEM_API_KEY
         # API Key 可选（Mock 服务器可能不需要）
         
         self.headers = {
@@ -150,11 +150,11 @@ _default_client: Optional[SystemClient] = None
 def get_default_client() -> Optional[SystemClient]:
     """获取默认的系统模型端客户端实例（如果已配置）"""
     global _default_client
-    # 只检查 SYSTEM_BASE_URL，不要求 SYSTEM_API_KEY（Mock 服务器可能不需要）
-    if _default_client is None and SYSTEM_BASE_URL:
+    # 只检查 DIAGNOSIS_SYSTEM_BASE_URL，不要求 DIAGNOSIS_SYSTEM_API_KEY（Mock 服务器可能不需要）
+    if _default_client is None and DIAGNOSIS_SYSTEM_BASE_URL:
         try:
             _default_client = SystemClient()
-            logger.info(f"✅ 系统模型端客户端初始化成功: {SYSTEM_BASE_URL}")
+            logger.info(f"✅ 系统模型端客户端初始化成功: {DIAGNOSIS_SYSTEM_BASE_URL}")
         except ValueError as e:
             logger.warning(f"⚠️ 系统模型端客户端初始化失败: {e}")
             return None

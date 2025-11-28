@@ -122,32 +122,7 @@ except Exception as e:
     print(f"⚠️ 无法创建目录 {APPROVED_REPORTS_DIR}: {e}")
 
 # 患者信息数据库（可以从实际数据源读取）
-PATIENT_INFO = {
-    'P001': {
-        'id': 'P001',
-        'name': '张三',
-        'age': 65,
-        'gender': '男',
-        'diagnosis': '2型糖尿病,高血压',
-        'dataFile': '0b389f61f90fcf6da613e08c64e06fdbaf05758cdd9e6b5ae730f1b8a8a654e4'
-    },
-    'P002': {
-        'id': 'P002',
-        'name': '李四',
-        'age': 58,
-        'gender': '女',
-        'diagnosis': '高血压,冠心病',
-        'dataFile': '6e84e63ded176d781f2a6e6a8d3e2cc82de94c2b360bee96209ddd24dabf3f3a'
-    },
-    'P003': {
-        'id': 'P003',
-        'name': '王五',
-        'age': 72,
-        'gender': '男',
-        'diagnosis': '慢性肾病,糖尿病',
-        'dataFile': '7cb394d6e1c52e050ef41a9caa3c186d6a6a71fe2172fa8f901783973404285a'
-    }
-}
+PATIENT_INFO = {}
 
 def check_available_report_types(patient_id: str, language: str | None = None) -> list:
     """
@@ -768,8 +743,7 @@ def health_check():
     status = {
         'status': 'healthy',
         'message': '慢性病报告生成服务运行正常',
-        'reportSystem': REPORT_SYSTEM_AVAILABLE,
-        'availablePatients': list(PATIENT_INFO.keys())
+        'reportSystem': REPORT_SYSTEM_AVAILABLE
     }
     
 

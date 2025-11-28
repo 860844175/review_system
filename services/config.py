@@ -21,8 +21,8 @@ APPROVAL_PLATFORM_API_KEY = os.getenv(
 # ======================== 系统模型端配置 ========================
 # 默认使用 Mock Zhikai 服务器（开发/测试环境）
 # 生产环境请通过环境变量设置真实系统地址
-SYSTEM_BASE_URL = os.getenv("SYSTEM_BASE_URL", "http://localhost:5002")  # 默认使用 Mock Zhikai
-SYSTEM_API_KEY = os.getenv("SYSTEM_API_KEY", "")  # Mock Zhikai 暂不需要 API Key，生产环境需要设置
+DIAGNOSIS_SYSTEM_BASE_URL = os.getenv("DIAGNOSIS_SYSTEM_BASE_URL", "http://localhost:5002")  # 默认使用 Mock Zhikai
+DIAGNOSIS_SYSTEM_API_KEY = os.getenv("DIAGNOSIS_SYSTEM_API_KEY", "")  # Mock Zhikai 暂不需要 API Key，生产环境需要设置
 
 # ======================== 本地服务配置 ========================
 LOCAL_BASE_URL = os.getenv(

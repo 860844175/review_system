@@ -118,7 +118,7 @@ class ApprovalPlatformClient:
             payload["hospitalId"] = hospital_id
         
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=10)
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
             response.raise_for_status()
             result = response.json()
             
@@ -186,7 +186,7 @@ class ApprovalPlatformClient:
         payload = {"id": doctor_id}
         
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=10)
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
             response.raise_for_status()
             result = response.json()
             
@@ -251,7 +251,7 @@ class ApprovalPlatformClient:
             headers["Token"] = self.api_key
         
         try:
-            response = requests.post(url, headers=headers, json={}, timeout=10)
+            response = requests.post(url, headers=headers, json={}, timeout=30)
             response.raise_for_status()
             result = response.json()
             
