@@ -64,9 +64,6 @@ def main(port_number=5001):
     print("📋 使用说明:")
     print("1. 系统将启动本地服务器")
 
-    print("3. 输入患者ID (P001, P002, P003) 测试功能")
-    print("4. 按 Ctrl+C 停止服务")
-    print()
     
     # 启动服务器
     print("🚀 正在启动服务器...")
@@ -80,9 +77,7 @@ def main(port_number=5001):
     print()
     print("💡 提示:")
 
-    print(f"- API地址: http://localhost:{port_number}/api")
-    print("- 可用患者ID: P001, P002, P003")
-    print()
+    # print(f"- API地址: http://localhost:{port_number}/api")
     print("⏳ 服务运行中，按 Ctrl+C 停止...")
     
     try:

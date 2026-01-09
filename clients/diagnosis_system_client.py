@@ -139,7 +139,7 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
         self.headers = {
-            "X-API-Key": api_key,
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
     
