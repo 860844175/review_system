@@ -153,11 +153,11 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
     
     def _get_api_prefix(self) -> str:
         """根据base_url判断API路径前缀"""
-        # 如果base_url包含/db或者agent.gate.bjknrt.com，使用/db前缀
-        if "agent.gate.bjknrt.com" in self.base_url:
-            return "/db"
-        # 如果base_url明确包含/db，使用/db前缀
-        elif "/db" in self.base_url or "/agent/db" in self.base_url:
+        # 如果base_url已经包含/db，不需要再添加前缀（返回空字符串）
+        if "/db" in self.base_url or "/agent/db" in self.base_url:
+            return ""  # base_url已经包含了/db，不需要再添加
+        # 如果base_url包含agent.gate.bjknrt.com（但没有/db），使用/db前缀
+        elif "agent.gate.bjknrt.com" in self.base_url:
             return "/db"
         # 否则使用/v1前缀（兼容mock服务器和旧版本API）
         else:
@@ -250,5 +250,6 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         if "limit" in kwargs:
             payload["limit"] = kwargs["limit"]
         
-        return self._post("/users/scenarios", payload)
+        prefix = self._get_api_prefix()
+        return self._post(f"{prefix}/users/scenarios", payload)
 
