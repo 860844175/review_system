@@ -1578,9 +1578,20 @@
                         // 保存系统原始值
                         if (result.data.triage) {
                             const triage = result.data.triage;
+                            // next_operation 英文转中文映射
+                            const nextOpMapping = {
+                                'suggestion_generated': '建议生成',
+                                'outpatient_followup': '门诊随访',
+                                'emergency_contact': '紧急联络',
+                                'emergency_examination': '急诊检查',
+                                'home_observation': '居家观察'
+                            };
+                            const rawNextOp = triage.next_operation || '';
+                            const mappedNextOp = nextOpMapping[rawNextOp] || rawNextOp;
+
                             const original = {
                                 urgency_level: triage.urgency_level || '',
-                                next_operation: triage.next_operation || '',
+                                next_operation: mappedNextOp,
                                 rationale: triage.rationale || '',
                                 likely_causes: triage.likely_causes || [],
                                 path: triage.path || 'home',
@@ -2234,15 +2245,10 @@
                                                                 >
                                                                     <option value="">请选择建议措施</option>
                                                                     <option value="建议生成">建议生成</option>
-                                                                    <option value="suggestion_generated">建议生成</option>
                                                                     <option value="门诊随访">门诊随访</option>
-                                                                    <option value="outpatient_followup">门诊随访</option>
                                                                     <option value="紧急联络">紧急联络</option>
-                                                                    <option value="emergency_contact">紧急联络</option>
                                                                     <option value="急诊检查">急诊检查</option>
-                                                                    <option value="emergency_examination">急诊检查</option>
                                                                     <option value="居家观察">居家观察</option>
-                                                                    <option value="home_observation">居家观察</option>
                                                                 </select>
                                                                 <div className="mt-1">
                                                                     <AnnotationInput
@@ -2855,15 +2861,10 @@
                                                                 >
                                                                     <option value="">请选择建议措施</option>
                                                                     <option value="建议生成">建议生成</option>
-                                                                    <option value="suggestion_generated">建议生成</option>
                                                                     <option value="门诊随访">门诊随访</option>
-                                                                    <option value="outpatient_followup">门诊随访</option>
                                                                     <option value="紧急联络">紧急联络</option>
-                                                                    <option value="emergency_contact">紧急联络</option>
                                                                     <option value="急诊检查">急诊检查</option>
-                                                                    <option value="emergency_examination">急诊检查</option>
                                                                     <option value="居家观察">居家观察</option>
-                                                                    <option value="home_observation">居家观察</option>
                                                                 </select>
                                                                 <div className="mt-1">
                                                                     <AnnotationInput
@@ -3248,9 +3249,10 @@
                                 )}
 
                             </div>
-                        )}
-                    </main>
-                </div>
+                        )
+                        }
+                    </main >
+                </div >
             );
         }
 
