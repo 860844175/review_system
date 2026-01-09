@@ -941,11 +941,15 @@ def diagnosis_system_triage_view_by_task():
         view_model = build_view_model(scenario, bundle, ehr, signals)
         
         # 提取对话历史（从bundle中）
-        from adapters.view_model_to_triage_context import _extract_dialogue_messages
+        from adapters.view_model_to_triage_context import _extract_dialogue_messages, _extract_symptoms_data
         dialogue_messages = _extract_dialogue_messages(bundle, language='zh')
         
         # 将对话历史添加到view_model中
         view_model["dialogue_messages"] = dialogue_messages
+        
+        # 提取症状数据（系统识别 + 患者自述）
+        symptoms_data = _extract_symptoms_data(bundle)
+        view_model["symptoms"] = symptoms_data
         
         # 提取triage_id和路径信息
         triage_id = None

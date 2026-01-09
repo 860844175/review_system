@@ -566,6 +566,41 @@ def _extract_anomaly_tags(signals_info: Dict[str, Any]) -> List[str]:
     return anomaly_tags
 
 
+def _extract_symptoms_data(bundle: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    从 bundle 中提取症状数据（系统识别 + 患者自述）
+    
+    返回格式：
+    {
+        "system_identified": ["恶心/呕吐", "胸闷", ...],  # 系统识别的症状列表
+        "patient_feedback": ["无明显症状"]  # 患者自述
+    }
+    """
+    bundle_data = bundle.get("bundle", {}).get("data", {}) or bundle.get("data", {})
+    symptoms = bundle_data.get("symptoms", [])
+    
+    system_identified = []
+    patient_feedback = []
+    
+    if symptoms and isinstance(symptoms, list):
+        for symptom in symptoms:
+            if isinstance(symptom, dict):
+                # 提取系统识别的症状（output_json）
+                output_json = symptom.get("output_json", [])
+                if output_json and isinstance(output_json, list):
+                    system_identified.extend([str(s) for s in output_json if s])
+                
+                # 提取患者自述（user_feedback）
+                user_feedback = symptom.get("user_feedback", [])
+                if user_feedback and isinstance(user_feedback, list):
+                    patient_feedback.extend([str(f) for f in user_feedback if f])
+    
+    return {
+        "system_identified": system_identified,
+        "patient_feedback": patient_feedback
+    }
+
+
 def _extract_suggestions_by_category(suggestions_list: List[Dict[str, Any]]) -> Dict[str, List[str]]:
     """
     从 suggestions 列表中提取建议，并按 category 分组

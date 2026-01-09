@@ -2097,8 +2097,48 @@
                                                 {/* 主诉 */}
                                                 <div className="xl:col-span-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
-                                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
-                                                        {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
+                                                    
+                                                    <div className="space-y-3">
+                                                        {/* 系统识别的症状 */}
+                                                        {data?.symptoms?.system_identified && data.symptoms.system_identified.length > 0 && (
+                                                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xs font-semibold text-blue-700">系统识别症状</span>
+                                                                    <span className="px-1.5 py-0.5 bg-blue-200 text-blue-700 text-[10px] rounded">
+                                                                        {data.symptoms.system_identified.length}项
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {data.symptoms.system_identified.map((symptom, idx) => (
+                                                                        <span 
+                                                                            key={idx}
+                                                                            className="px-2.5 py-1 bg-white border border-blue-200 text-blue-700 text-xs rounded-md font-medium"
+                                                                        >
+                                                                            {symptom}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* 患者自述 */}
+                                                        {data?.symptoms?.patient_feedback && data.symptoms.patient_feedback.length > 0 && (
+                                                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xs font-semibold text-gray-700">患者自述</span>
+                                                                </div>
+                                                                <div className="text-gray-700 text-sm">
+                                                                    {data.symptoms.patient_feedback.join('、')}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* 如果没有症状数据，显示原来的内容 */}
+                                                        {(!data?.symptoms?.system_identified?.length && !data?.symptoms?.patient_feedback?.length) && (
+                                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
+                                                                {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -2713,8 +2753,48 @@
                                                 {/* 主诉 */}
                                                 <div className="xl:col-span-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
-                                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
-                                                        {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
+                                                    
+                                                    <div className="space-y-3">
+                                                        {/* 系统识别的症状 */}
+                                                        {data?.symptoms?.system_identified && data.symptoms.system_identified.length > 0 && (
+                                                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xs font-semibold text-blue-700">系统识别症状</span>
+                                                                    <span className="px-1.5 py-0.5 bg-blue-200 text-blue-700 text-[10px] rounded">
+                                                                        {data.symptoms.system_identified.length}项
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {data.symptoms.system_identified.map((symptom, idx) => (
+                                                                        <span 
+                                                                            key={idx}
+                                                                            className="px-2.5 py-1 bg-white border border-blue-200 text-blue-700 text-xs rounded-md font-medium"
+                                                                        >
+                                                                            {symptom}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* 患者自述 */}
+                                                        {data?.symptoms?.patient_feedback && data.symptoms.patient_feedback.length > 0 && (
+                                                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xs font-semibold text-gray-700">患者自述</span>
+                                                                </div>
+                                                                <div className="text-gray-700 text-sm">
+                                                                    {data.symptoms.patient_feedback.join('、')}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* 如果没有症状数据，显示原来的内容 */}
+                                                        {(!data?.symptoms?.system_identified?.length && !data?.symptoms?.patient_feedback?.length) && (
+                                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
+                                                                {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
