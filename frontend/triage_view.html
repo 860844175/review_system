@@ -1388,26 +1388,40 @@
                                       data?.bundle?.data?.raw_signals || 
                                       [];
                 
+                console.log('🔍 summaryText: rawSignalsList =', rawSignalsList);
+                
                 if (!rawSignalsList || !Array.isArray(rawSignalsList) || rawSignalsList.length === 0) {
+                    console.log('🔍 summaryText: rawSignalsList 为空或不是数组');
                     return null;
                 }
                 
                 const firstRawSignal = rawSignalsList[0];
                 const signalId = firstRawSignal?.signal_id;
                 
+                console.log('🔍 summaryText: signalId =', signalId);
+                console.log('🔍 summaryText: firstRawSignal =', firstRawSignal);
+                
                 if (!signalId) {
+                    console.log('🔍 summaryText: 没有找到 signal_id');
                     return null;
                 }
                 
                 // 从 bundle.data.signals 中查找对应的 signal
                 const signalsList = data?.bundle?.data?.signals || data?.signals;
                 
+                console.log('🔍 summaryText: signalsList =', signalsList);
+                console.log('🔍 summaryText: Array.isArray(signalsList) =', Array.isArray(signalsList));
+                
                 // 确保 signalsList 是数组
                 if (!Array.isArray(signalsList) || signalsList.length === 0) {
+                    console.log('🔍 summaryText: signalsList 不是数组或为空');
                     return null;
                 }
                 
                 const matchedSignal = signalsList.find(s => s.signal_id === signalId);
+                
+                console.log('🔍 summaryText: matchedSignal =', matchedSignal);
+                console.log('🔍 summaryText: summary_text =', matchedSignal?.summary_text);
                 
                 return matchedSignal?.summary_text || null;
             }, [rawSignals, data]);
