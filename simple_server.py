@@ -801,7 +801,7 @@ def diagnosis_system_triage_view():
         
         # 读取4个JSON
         scenario = client.get_scenario(scenario_id)
-        bundle = client.get_scenario_bundle(scenario_id)
+        bundle = client.get_scenario_bundle(scenario_id, include_reviews=True, include_signals=True)
         ehr = client.get_user_ehr(user_id)
         signals = client.get_user_signals(user_id)
         
@@ -882,7 +882,7 @@ def diagnosis_system_triage_view_by_task():
             # 1. 只拉取场景聚合信息 (Bundle)
             print(f"[{datetime.utcnow().isoformat()}Z] 1️⃣ 拉取场景聚合信息: {scenario_id}")
             # scenario = client.get_scenario(scenario_id) # 不再单独拉取scenario
-            bundle = client.get_scenario_bundle(scenario_id)
+            bundle = client.get_scenario_bundle(scenario_id, include_reviews=True, include_signals=True)
             
             # 从bundle中提取scenario信息
             scenario = bundle.get('scenario', {})
@@ -1219,7 +1219,7 @@ def submit_triage_review():
                             api_key = os.getenv('DIAGNOSIS_SYSTEM_API_KEY', '')
                             if base_url and api_key:
                                 client = LiveDiagnosisSystemClient(base_url=base_url, api_key=api_key)
-                                bundle = client.get_scenario_bundle(scenario_id)
+                                bundle = client.get_scenario_bundle(scenario_id, include_reviews=True, include_signals=True)
                                 
                                 triage_data = (
                                     bundle.get("bundle", {}).get("data", {}).get("triage", {}) or

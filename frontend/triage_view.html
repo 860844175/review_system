@@ -1336,11 +1336,27 @@
 
             // 提取 raw_signals 数据
             const rawSignalData = React.useMemo(() => {
-                if (!rawSignals || !Array.isArray(rawSignals) || rawSignals.length === 0) {
+                // 尝试多个可能的数据路径
+                const rawSignalsList = rawSignals || 
+                                      data?.raw_signals || 
+                                      data?.bundle?.data?.raw_signals || 
+                                      [];
+                
+                console.log('🔍 RawSignalVisualization - rawSignals:', rawSignals);
+                console.log('🔍 RawSignalVisualization - data?.raw_signals:', data?.raw_signals);
+                console.log('🔍 RawSignalVisualization - rawSignalsList:', rawSignalsList);
+                
+                if (!rawSignalsList || !Array.isArray(rawSignalsList) || rawSignalsList.length === 0) {
+                    console.warn('⚠️ raw_signals 为空或不是数组');
                     return null;
                 }
-                return rawSignals[0]?.data || null;
-            }, [rawSignals]);
+                
+                const firstRawSignal = rawSignalsList[0];
+                console.log('🔍 RawSignalVisualization - firstRawSignal:', firstRawSignal);
+                console.log('🔍 RawSignalVisualization - firstRawSignal.data:', firstRawSignal?.data);
+                
+                return firstRawSignal?.data || null;
+            }, [rawSignals, data]);
 
             // 提取基线值
             const { baselineHR, baselineSpo2, baselineSBP, baselineDBP } = React.useMemo(() => {

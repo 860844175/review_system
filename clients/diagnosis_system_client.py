@@ -20,7 +20,7 @@ class DiagnosisSystemClient:
     def get_scenario(self, scenario_id: str) -> dict:
         raise NotImplementedError
     
-    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True) -> dict:
+    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True, include_signals: bool = True) -> dict:
         raise NotImplementedError
     
     def get_user_ehr(self, user_id: str, fields: Optional[list[str]] = None) -> dict:
@@ -110,8 +110,9 @@ class FixtureDiagnosisSystemClient(DiagnosisSystemClient):
         """获取场景信息"""
         return _read_json(self.fixture_base / "scenarios_get.json")
     
-    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True) -> dict:
+    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True, include_signals: bool = True) -> dict:
         """获取场景聚合数据"""
+        # fixture模式下，include_signals参数会被忽略，因为数据已经在JSON文件中
         return _read_json(self.fixture_base / "scenarios_bundle.json")
     
     def get_user_ehr(self, user_id: str, fields: Optional[list[str]] = None) -> dict:
@@ -153,22 +154,23 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
     def get_scenario(self, scenario_id: str) -> dict:
         """获取场景详情"""
         payload = {"scenario_id": scenario_id}
-        return self._post("/scenarios/get", payload)
+        return self._post("/db/scenarios/get", payload)
     
-    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True) -> dict:
+    def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True, include_signals: bool = True) -> dict:
         """获取场景聚合"""
         payload = {
             "scenario_id": scenario_id,
-            "include_reviews": include_reviews
+            "include_reviews": include_reviews,
+            "include_signals": include_signals  # 添加这个参数以获取raw_signals
         }
-        return self._post("/scenarios/bundle", payload)
+        return self._post("/db/scenarios/bundle", payload)
     
     def get_user_ehr(self, user_id: str, fields: Optional[list[str]] = None) -> dict:
         """获取用户EHR"""
         payload = {"user_id": user_id}
         if fields:
             payload["fields"] = fields
-        return self._post("/users/ehr", payload)
+        return self._post("/db/users/ehr", payload)
     
     def get_user_signals(self, user_id: str, **kwargs) -> dict:
         """
@@ -197,7 +199,7 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         if "limit" in kwargs:
             payload["limit"] = kwargs["limit"]
         
-        return self._post("/users/signals", payload)
+        return self._post("/db/users/signals", payload)
     
     def get_user_scenarios(self, user_id: str, **kwargs) -> dict:
         """

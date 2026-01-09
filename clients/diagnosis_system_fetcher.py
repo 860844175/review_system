@@ -61,7 +61,7 @@ def fetch_diagnosis_data(
         
         # 2. 拉取场景聚合（bundle）
         logger.info(f"📥 拉取场景聚合: scenario_id={scenario_id}")
-        bundle = client.get_scenario_bundle(scenario_id, include_reviews=True)
+        bundle = client.get_scenario_bundle(scenario_id, include_reviews=True, include_signals=True)
         if not bundle:
             raise DataFetchError(f"场景聚合数据为空: scenario_id={scenario_id}")
         logger.info(f"✅ 场景聚合数据拉取成功")
