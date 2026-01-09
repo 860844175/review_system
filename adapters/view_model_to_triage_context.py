@@ -176,11 +176,15 @@ def _extract_vital_signs(signals_info: Dict[str, Any], baseline_vitals: Dict[str
     """
     从 signals 和 baseline_vitals 中提取生命体征
     
-    使用最近一次signal的mean值作为当前生命体征，并记录测量时间
+    使用 bundle.data.signals[0].metrics_json 中的:
+    - detection_summary: 触发异常时刻的生理指标（window_length: 600s = 10分钟）
+    - overall_summary: 整个事件窗口的生理指标（window_length: 3600s = 1小时）
+    
+    返回三组数据：触发时刻值、前1小时范围、基线值
     """
     signals_list = signals_info.get("signals_list", [])
     
-    # 获取最近一次signal（第一个，因为signals是按时间降序排列的）
+    # 获取最近一次signal
     latest_signal = signals_list[0] if signals_list and isinstance(signals_list[0], dict) else None
     
     # 提取最近一次测量的时间
@@ -193,86 +197,99 @@ def _extract_vital_signs(signals_info: Dict[str, Any], baseline_vitals: Dict[str
                 dt = datetime.fromisoformat(start_ts.replace('Z', '+00:00'))
                 latest_measurement_time = dt.strftime("%Y-%m-%d %H:%M")
             except:
-                latest_measurement_time = start_ts[:16]  # 截取前16个字符
+                latest_measurement_time = start_ts[:16]
     
-    # 从最近一次signal中提取metrics
-    nested_metrics = {}
+    # 从 metrics_json 中提取 detection_summary 和 overall_summary
+    detection_summary = {}
+    overall_summary = {}
     if latest_signal:
         metrics_json = latest_signal.get("metrics_json", {})
-        output_json = metrics_json.get("output_json", {}) if isinstance(metrics_json, dict) else {}
-        nested_metrics = output_json.get("metrics_json", {}) if isinstance(output_json, dict) else {}
+        if isinstance(metrics_json, dict):
+            detection_summary = metrics_json.get("detection_summary", {})
+            overall_summary = metrics_json.get("overall_summary", {})
     
-    # 如果nested_metrics为空，尝试从signals_info.metrics提取（向后兼容）
-    if not nested_metrics:
-        nested_metrics = signals_info.get("metrics", {})
-        if isinstance(nested_metrics, dict) and "metrics_json" in nested_metrics:
-            nested_metrics = nested_metrics.get("metrics_json", {})
+    # 提取心率
+    # 触发时刻值（from detection_summary）
+    hr_detection = detection_summary.get("心率", {})
+    hr_trigger = hr_detection.get("mean") if isinstance(hr_detection, dict) else None
     
-    # 提取心率（使用mean值）
-    heart_rate = nested_metrics.get("heart_rate", {})
-    if isinstance(heart_rate, dict):
-        hr_value = heart_rate.get("mean")
-    else:
-        hr_value = baseline_vitals.get("心率")
+    # 前1小时范围（from overall_summary）
+    hr_overall = overall_summary.get("心率", {})
+    hr_range_min = hr_overall.get("min") if isinstance(hr_overall, dict) else None
+    hr_range_max = hr_overall.get("max") if isinstance(hr_overall, dict) else None
     
-    # 提取血氧（使用mean值）
-    spo2 = nested_metrics.get("spo2", {})
-    if isinstance(spo2, dict):
-        o2sat_value = spo2.get("mean")
-    else:
-        o2sat_value = None
+    # 基线值
+    hr_baseline = baseline_vitals.get("心率")
     
-    # 提取体温（从°C转为°F，使用mean值）
-    temperature_c = nested_metrics.get("temperature", {})
-    if isinstance(temperature_c, dict):
-        temp_c = temperature_c.get("mean")
-        if temp_c is not None:
-            temp_f = round(temp_c * 9 / 5 + 32, 1)
-        else:
-            temp_f = None
-    else:
-        temp_baseline = baseline_vitals.get("体温")
-        if temp_baseline is not None:
-            if isinstance(temp_baseline, (int, float)):
-                temp_f = round(temp_baseline * 9 / 5 + 32, 1)
-            else:
-                temp_f = None
-        else:
-            temp_f = None
+    # 提取血压
+    # 触发时刻值
+    bp_detection = detection_summary.get("血压", {})
+    sbp_detection = bp_detection.get("收缩压", {}) if isinstance(bp_detection, dict) else {}
+    dbp_detection = bp_detection.get("舒张压", {}) if isinstance(bp_detection, dict) else {}
+    sbp_trigger = sbp_detection.get("mean") if isinstance(sbp_detection, dict) else None
+    dbp_trigger = dbp_detection.get("mean") if isinstance(dbp_detection, dict) else None
     
-    # 提取血压（使用mean值）
-    blood_pressure = nested_metrics.get("blood_pressure", {})
-    if isinstance(blood_pressure, dict):
-        systolic = blood_pressure.get("systolic", {})
-        diastolic = blood_pressure.get("diastolic", {})
-        if isinstance(systolic, dict):
-            sbp = systolic.get("mean")
-        else:
-            sbp = None
-        if isinstance(diastolic, dict):
-            dbp = diastolic.get("mean")
-        else:
-            dbp = None
-    else:
-        # 从 baseline_vitals 提取
-        bp = baseline_vitals.get("血压", {})
-        if isinstance(bp, dict):
-            sbp = bp.get("收缩压")
-            dbp = bp.get("舒张压")
-        else:
-            sbp = None
-            dbp = None
+    # 前1小时范围
+    bp_overall = overall_summary.get("血压", {})
+    sbp_overall = bp_overall.get("收缩压", {}) if isinstance(bp_overall, dict) else {}
+    dbp_overall = bp_overall.get("舒张压", {}) if isinstance(bp_overall, dict) else {}
+    sbp_range_min = sbp_overall.get("min") if isinstance(sbp_overall, dict) else None
+    sbp_range_max = sbp_overall.get("max") if isinstance(sbp_overall, dict) else None
+    dbp_range_min = dbp_overall.get("min") if isinstance(dbp_overall, dict) else None
+    dbp_range_max = dbp_overall.get("max") if isinstance(dbp_overall, dict) else None
+    
+    # 基线值
+    bp_baseline = baseline_vitals.get("血压", {})
+    sbp_baseline = bp_baseline.get("收缩压") if isinstance(bp_baseline, dict) else None
+    dbp_baseline = bp_baseline.get("舒张压") if isinstance(bp_baseline, dict) else None
+    
+    # 提取血氧
+    spo2_detection = detection_summary.get("血氧饱和度", {})
+    spo2_trigger = spo2_detection.get("mean") if isinstance(spo2_detection, dict) else None
+    
+    spo2_overall = overall_summary.get("血氧饱和度", {})
+    spo2_range_min = spo2_overall.get("min") if isinstance(spo2_overall, dict) else None
+    spo2_range_max = spo2_overall.get("max") if isinstance(spo2_overall, dict) else None
+    
+    # 提取体温（保持℃）
+    temp_detection = detection_summary.get("体温", {})
+    temp_trigger = temp_detection.get("mean") if isinstance(temp_detection, dict) else None
+    
+    temp_overall = overall_summary.get("体温", {})
+    temp_range_min = temp_overall.get("min") if isinstance(temp_overall, dict) else None
+    temp_range_max = temp_overall.get("max") if isinstance(temp_overall, dict) else None
+    
+    temp_baseline = baseline_vitals.get("体温")
     
     return {
-        "temperature": temp_f,
-        "heartrate": hr_value,
-        "resprate": None,  # signals 中没有呼吸频率
-        "o2sat": o2sat_value,
-        "sbp": sbp,
-        "dbp": dbp,
-        "pain": None,  # signals 中没有疼痛评分
+        # 触发时刻值（用于显示"当前值"）
+        "heartrate": hr_trigger,
+        "sbp": sbp_trigger,
+        "dbp": dbp_trigger,
+        "o2sat": spo2_trigger,
+        "temperature": temp_trigger,
+        "resprate": None,
+        "pain": None,
         "esi": triage.get("esi_level"),
-        "measurement_time": latest_measurement_time  # 添加测量时间
+        "measurement_time": latest_measurement_time,
+        
+        # 前1小时范围（新增字段）
+        "ranges": {
+            "heart_rate": {"min": hr_range_min, "max": hr_range_max} if hr_range_min is not None else None,
+            "blood_pressure": {
+                "systolic": {"min": sbp_range_min, "max": sbp_range_max} if sbp_range_min is not None else None,
+                "diastolic": {"min": dbp_range_min, "max": dbp_range_max} if dbp_range_min is not None else None
+            },
+            "spo2": {"min": spo2_range_min, "max": spo2_range_max} if spo2_range_min is not None else None,
+            "temperature": {"min": temp_range_min, "max": temp_range_max} if temp_range_min is not None else None
+        },
+        
+        # 基线值（从 EHR）
+        "baselines": {
+            "heart_rate": hr_baseline,
+            "blood_pressure": {"systolic": sbp_baseline, "diastolic": dbp_baseline},
+            "temperature": temp_baseline
+        }
     }
 
 
@@ -296,13 +313,7 @@ def _extract_chief_complaint(view_model: Dict[str, Any], bundle: Dict[str, Any] 
                     if complaint:
                         return complaint
     
-    # 备选：从 signals 的 summary_text 中提取
-    signals_info = view_model.get("signals", {})
-    summary_text = signals_info.get("summary_text", "")
-    if summary_text:
-        return summary_text[:100]  # 限制长度
-    
-    # 备选：从 triage 的 rationale 中提取
+    # 备选：从 triage 的 rationale 中提取（不再使用 signals.summary_text，因为可能包含无关的历史信号）
     triage = view_model.get("triage", {})
     rationale = triage.get("rationale", "")
     if rationale:
