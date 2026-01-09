@@ -1400,7 +1400,13 @@
                 }
                 
                 // 从 bundle.data.signals 中查找对应的 signal
-                const signalsList = data?.bundle?.data?.signals || data?.signals || [];
+                const signalsList = data?.bundle?.data?.signals || data?.signals;
+                
+                // 确保 signalsList 是数组
+                if (!Array.isArray(signalsList) || signalsList.length === 0) {
+                    return null;
+                }
+                
                 const matchedSignal = signalsList.find(s => s.signal_id === signalId);
                 
                 return matchedSignal?.summary_text || null;
