@@ -951,6 +951,11 @@ def diagnosis_system_triage_view_by_task():
         symptoms_data = _extract_symptoms_data(bundle)
         view_model["symptoms"] = symptoms_data
         
+        # 提取 raw_signals（1小时内的原始时间序列数据）
+        bundle_data = bundle.get("bundle", {}).get("data", {}) or bundle.get("data", {})
+        raw_signals = bundle_data.get("raw_signals", [])
+        view_model["raw_signals"] = raw_signals
+        
         # 提取triage_id和路径信息
         triage_id = None
         triage_data = (

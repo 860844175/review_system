@@ -1323,6 +1323,374 @@
             );
         };
 
+        // --- Raw Signal 可视化组件（1小时内的原始事件时间序列数据） ---
+        const RawSignalVisualization = ({ rawSignals, data, viewMode }) => {
+            const hrChartRef = React.useRef(null);
+            const spo2ChartRef = React.useRef(null);
+            const bpChartRef = React.useRef(null);
+            const stepChartRef = React.useRef(null);
+            const hrChartInstance = React.useRef(null);
+            const spo2ChartInstance = React.useRef(null);
+            const bpChartInstance = React.useRef(null);
+            const stepChartInstance = React.useRef(null);
+
+            // 提取 raw_signals 数据
+            const rawSignalData = React.useMemo(() => {
+                if (!rawSignals || !Array.isArray(rawSignals) || rawSignals.length === 0) {
+                    return null;
+                }
+                return rawSignals[0]?.data || null;
+            }, [rawSignals]);
+
+            // 提取基线值
+            const { baselineHR, baselineSpo2, baselineSBP, baselineDBP } = React.useMemo(() => {
+                const patient = data?.patient || {};
+                const baselineVitals = patient.baseline_vitals || {};
+                const baselineHR = baselineVitals['心率'] || baselineVitals.heart_rate || null;
+                const baselineSpo2 = baselineVitals['血氧'] || baselineVitals.spo2 || null;
+                const baselineBP = baselineVitals['血压'] || baselineVitals.blood_pressure || null;
+                const baselineSBP = baselineBP?.收缩压 || baselineBP?.systolic || null;
+                const baselineDBP = baselineBP?.舒张压 || baselineBP?.diastolic || null;
+                return { baselineHR, baselineSpo2, baselineSBP, baselineDBP };
+            }, [data]);
+
+            if (!rawSignalData) {
+                return (
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <p className="text-xs text-slate-400 text-center">暂无原始信号数据</p>
+                    </div>
+                );
+            }
+
+            // 处理原始事件数据，转换为图表格式
+            const processEventData = React.useMemo(() => {
+                const hrEvents = rawSignalData.hr_event || [];
+                const bpEvents = rawSignalData.bp_event || [];
+                const boEvents = rawSignalData.bo_event || [];
+                const stepEvents = rawSignalData.step_event || [];
+
+                return {
+                    heartRate: {
+                        labels: hrEvents.map(e => {
+                            try {
+                                const date = new Date(e.time);
+                                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            } catch {
+                                return e.time?.substring(11, 19) || e.time;
+                            }
+                        }),
+                        values: hrEvents.map(e => e.event_data?.hr || null)
+                    },
+                    bloodPressure: {
+                        labels: bpEvents.map(e => {
+                            try {
+                                const date = new Date(e.time);
+                                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            } catch {
+                                return e.time?.substring(11, 19) || e.time;
+                            }
+                        }),
+                        systolic: bpEvents.map(e => e.event_data?.sbp || null),
+                        diastolic: bpEvents.map(e => e.event_data?.dbp || null)
+                    },
+                    spo2: {
+                        labels: boEvents.map(e => {
+                            try {
+                                const date = new Date(e.time);
+                                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            } catch {
+                                return e.time?.substring(11, 19) || e.time;
+                            }
+                        }),
+                        values: boEvents.map(e => e.event_data?.oxygen || null)
+                    },
+                    steps: {
+                        labels: stepEvents.map(e => {
+                            try {
+                                const date = new Date(e.time);
+                                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            } catch {
+                                return e.time?.substring(11, 19) || e.time;
+                            }
+                        }),
+                        values: stepEvents.map(e => e.event_data?.step_count || 0)
+                    }
+                };
+            }, [rawSignalData]);
+
+            // 使用 useEffect 初始化 Chart.js 图表（简化版，与 diagnosis-system-review-ui 相同的逻辑）
+            React.useEffect(() => {
+                if (typeof Chart === 'undefined') {
+                    console.warn('Chart.js 未加载');
+                    return;
+                }
+
+                const cleanup = () => {
+                    [hrChartInstance, spo2ChartInstance, bpChartInstance, stepChartInstance].forEach(ref => {
+                        if (ref.current) {
+                            ref.current.destroy();
+                            ref.current = null;
+                        }
+                    });
+                };
+
+                cleanup();
+
+                // 心率图表
+                if (hrChartRef.current && processEventData.heartRate.values.length > 0 && processEventData.heartRate.values.some(v => v !== null)) {
+                    const hrValues = processEventData.heartRate.values;
+                    const allValues = hrValues.filter(v => v !== null);
+                    if (allValues.length > 0) {
+                        const dataMin = Math.min(...allValues);
+                        const dataMax = Math.max(...allValues);
+                        const range = dataMax - dataMin;
+                        const yMin = Math.max(40, Math.floor(dataMin - range * 0.2));
+                        const yMax = Math.min(120, Math.ceil(dataMax + range * 0.2));
+
+                        hrChartInstance.current = new Chart(hrChartRef.current, {
+                            type: 'line',
+                            data: {
+                                labels: processEventData.heartRate.labels,
+                                datasets: [
+                                    {
+                                        label: '心率 (bpm)',
+                                        data: hrValues,
+                                        borderColor: 'rgb(239, 68, 68)',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        tension: 0.4,
+                                        fill: false
+                                    },
+                                    ...(baselineHR ? [{
+                                        label: '基线',
+                                        data: new Array(hrValues.length).fill(baselineHR),
+                                        borderColor: 'rgb(148, 163, 184)',
+                                        backgroundColor: 'transparent',
+                                        borderDash: [5, 5],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }] : [])
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                                    title: { display: false }
+                                },
+                                scales: {
+                                    y: { min: yMin, max: yMax, title: { display: true, text: 'bpm' } },
+                                    x: { title: { display: true, text: '时间' } }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 血压图表
+                if (bpChartRef.current && processEventData.bloodPressure.systolic.length > 0 && processEventData.bloodPressure.systolic.some(v => v !== null)) {
+                    const sbpValues = processEventData.bloodPressure.systolic;
+                    const dbpValues = processEventData.bloodPressure.diastolic;
+                    const allValues = [...sbpValues, ...dbpValues].filter(v => v !== null);
+                    if (allValues.length > 0) {
+                        const dataMin = Math.min(...allValues);
+                        const dataMax = Math.max(...allValues);
+                        const range = dataMax - dataMin;
+                        const yMin = Math.max(60, Math.floor(dataMin - range * 0.2));
+                        const yMax = Math.min(180, Math.ceil(dataMax + range * 0.2));
+
+                        bpChartInstance.current = new Chart(bpChartRef.current, {
+                            type: 'line',
+                            data: {
+                                labels: processEventData.bloodPressure.labels,
+                                datasets: [
+                                    {
+                                        label: '收缩压 (mmHg)',
+                                        data: sbpValues,
+                                        borderColor: 'rgb(239, 68, 68)',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        tension: 0.4,
+                                        fill: false
+                                    },
+                                    {
+                                        label: '舒张压 (mmHg)',
+                                        data: dbpValues,
+                                        borderColor: 'rgb(59, 130, 246)',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        tension: 0.4,
+                                        fill: false
+                                    },
+                                    ...(baselineSBP && baselineDBP ? [{
+                                        label: '基线（收缩压）',
+                                        data: new Array(sbpValues.length).fill(baselineSBP),
+                                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                                        backgroundColor: 'transparent',
+                                        borderDash: [5, 5],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }, {
+                                        label: '基线（舒张压）',
+                                        data: new Array(dbpValues.length).fill(baselineDBP),
+                                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                                        backgroundColor: 'transparent',
+                                        borderDash: [5, 5],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }] : [])
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                                    title: { display: false }
+                                },
+                                scales: {
+                                    y: { min: yMin, max: yMax, title: { display: true, text: 'mmHg' } },
+                                    x: { title: { display: true, text: '时间' } }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 血氧图表
+                if (spo2ChartRef.current && processEventData.spo2.values.length > 0 && processEventData.spo2.values.some(v => v !== null)) {
+                    const spo2Values = processEventData.spo2.values;
+                    const allValues = spo2Values.filter(v => v !== null);
+                    if (allValues.length > 0) {
+                        const dataMin = Math.min(...allValues);
+                        const dataMax = Math.max(...allValues);
+                        const range = dataMax - dataMin;
+                        const yMin = Math.max(90, Math.floor(dataMin - range * 0.2));
+                        const yMax = Math.min(100, Math.ceil(dataMax + range * 0.2));
+
+                        spo2ChartInstance.current = new Chart(spo2ChartRef.current, {
+                            type: 'line',
+                            data: {
+                                labels: processEventData.spo2.labels,
+                                datasets: [
+                                    {
+                                        label: '血氧饱和度 (%)',
+                                        data: spo2Values,
+                                        borderColor: 'rgb(34, 197, 94)',
+                                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                        pointRadius: 3,
+                                        pointHoverRadius: 5,
+                                        tension: 0.4,
+                                        fill: false
+                                    },
+                                    ...(baselineSpo2 ? [{
+                                        label: '基线',
+                                        data: new Array(spo2Values.length).fill(baselineSpo2),
+                                        borderColor: 'rgb(148, 163, 184)',
+                                        backgroundColor: 'transparent',
+                                        borderDash: [5, 5],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }] : [])
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                                    title: { display: false }
+                                },
+                                scales: {
+                                    y: { min: yMin, max: yMax, title: { display: true, text: '%' } },
+                                    x: { title: { display: true, text: '时间' } }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 步数图表
+                if (stepChartRef.current && processEventData.steps.values.length > 0) {
+                    stepChartInstance.current = new Chart(stepChartRef.current, {
+                        type: 'bar',
+                        data: {
+                            labels: processEventData.steps.labels,
+                            datasets: [{
+                                label: '步数 (步/分钟)',
+                                data: processEventData.steps.values,
+                                backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                                borderColor: 'rgb(139, 92, 246)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                                title: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, title: { display: true, text: '步/分钟' } },
+                                x: { title: { display: true, text: '时间' } }
+                            }
+                        }
+                    });
+                }
+
+                return cleanup;
+            }, [processEventData, baselineHR, baselineSpo2, baselineSBP, baselineDBP, viewMode]);
+
+            return (
+                <div className="space-y-4">
+                    {/* 心率图表 */}
+                    {processEventData.heartRate.values.length > 0 && (
+                        <div className="bg-white rounded-lg border border-slate-200 p-3">
+                            <h4 className="text-xs font-bold text-slate-700 mb-2">心率</h4>
+                            <div className="h-48">
+                                <canvas ref={hrChartRef}></canvas>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 血压图表 */}
+                    {processEventData.bloodPressure.systolic.length > 0 && (
+                        <div className="bg-white rounded-lg border border-slate-200 p-3">
+                            <h4 className="text-xs font-bold text-slate-700 mb-2">血压</h4>
+                            <div className="h-48">
+                                <canvas ref={bpChartRef}></canvas>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 血氧图表 */}
+                    {processEventData.spo2.values.length > 0 && (
+                        <div className="bg-white rounded-lg border border-slate-200 p-3">
+                            <h4 className="text-xs font-bold text-slate-700 mb-2">血氧饱和度</h4>
+                            <div className="h-48">
+                                <canvas ref={spo2ChartRef}></canvas>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 步数图表 */}
+                    {processEventData.steps.values.length > 0 && (
+                        <div className="bg-white rounded-lg border border-slate-200 p-3">
+                            <h4 className="text-xs font-bold text-slate-700 mb-2">步数</h4>
+                            <div className="h-48">
+                                <canvas ref={stepChartRef}></canvas>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         // --- 批注输入组件 ---
         const AnnotationInput = ({ targetPath, targetId, targetKind, originalValue, existingAnnotation, onSave, onDelete, showButton = true }) => {
             const [isAnnotating, setIsAnnotating] = useState(false);
@@ -1453,7 +1821,8 @@
             const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // 默认折叠
             const [dialogueMessages, setDialogueMessages] = useState([]); // 对话历史
             const [viewMode, setViewMode] = useState('shorthand'); // 视图模式：'shorthand' 或 'full'
-
+            const [signalTab, setSignalTab] = useState('event'); // 信号可视化 Tab：'event'（事件详情）或 'trend'（长期趋势）
+            
             // 批注和修改相关state
             const [annotations, setAnnotations] = useState([]); // 所有批注和修改
             const [editingAnnotations, setEditingAnnotations] = useState({}); // 正在编辑的批注 {targetPath: true/false}
@@ -2065,8 +2434,48 @@
                                                 <h3 className="font-bold text-slate-800 text-sm">信号检测可视化</h3>
                                             </div>
                                         </div>
+                                        
+                                        {/* Tab 切换 */}
+                                        <div className="border-b border-slate-200">
+                                            <div className="flex">
+                                                <button
+                                                    className={`px-4 py-2 text-xs font-semibold transition-colors ${
+                                                        signalTab === 'event' 
+                                                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' 
+                                                            : 'text-slate-500 hover:text-slate-700'
+                                                    }`}
+                                                    onClick={() => setSignalTab('event')}
+                                                >
+                                                    事件详情 (1小时)
+                                                </button>
+                                                <button
+                                                    className={`px-4 py-2 text-xs font-semibold transition-colors ${
+                                                        signalTab === 'trend' 
+                                                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' 
+                                                            : 'text-slate-500 hover:text-slate-700'
+                                                    }`}
+                                                    onClick={() => setSignalTab('trend')}
+                                                >
+                                                    长期趋势 (30天)
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Tab 内容 */}
                                         <div className="p-4">
-                                            <SignalVisualization signals={signals} data={data} viewMode={viewMode} />
+                                            {signalTab === 'event' ? (
+                                                <RawSignalVisualization 
+                                                    rawSignals={data?.raw_signals} 
+                                                    data={data} 
+                                                    viewMode={viewMode} 
+                                                />
+                                            ) : (
+                                                <SignalVisualization 
+                                                    signals={signals} 
+                                                    data={data} 
+                                                    viewMode={viewMode} 
+                                                />
+                                            )}
                                         </div>
                                         <div className="px-4 pb-4">
                                             <AnnotationInput
