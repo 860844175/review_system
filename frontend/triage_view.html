@@ -1859,15 +1859,11 @@
                 }
             };
 
-            // 根据path决定显示哪个建议
-            const suggestionsToShow = path === 'immediate'
-                ? (suggestions.doctor || [])
-                : (suggestions.patient || []);
-
-            // 提取建议内容
-            const getRecommendations = () => {
+            // 提取患者建议内容
+            const getPatientRecommendations = () => {
                 const recs = [];
-                suggestionsToShow.forEach(suggestion => {
+                const patientSuggestions = suggestions.patient || [];
+                patientSuggestions.forEach(suggestion => {
                     const outputJson = suggestion.output_json || '';
                     if (Array.isArray(outputJson)) {
                         outputJson.forEach(item => {
@@ -1883,6 +1879,9 @@
                 });
                 return recs;
             };
+
+            // 兼容旧名称
+            const getRecommendations = getPatientRecommendations;
 
             // 提取医生建议内容
             const getDoctorRecommendations = () => {
@@ -2306,7 +2305,7 @@
                                                     </AITaskBlock>
 
                                                     <AITaskBlock
-                                                        title="建议处置 (Recommendations)"
+                                                        title="建议病人 (Patient Recommendations)"
                                                         targetPath={dataPaths.patient_recommendations || "bundle.data.suggestions.patient"}
                                                         targetId={triageId}
                                                         targetKind="triage_result"
@@ -2325,22 +2324,22 @@
                                                                 </ol>
                                                             </div>
                                                         ) : (
-                                                            <p className="text-slate-400 text-xs">暂无处置建议</p>
+                                                            <p className="text-slate-400 text-xs">暂无患者建议</p>
                                                         )}
                                                     </AITaskBlock>
 
-                                                    {/* 医生措施（如果有且与患者建议不同，则单独显示） */}
-                                                    {doctorRecommendations.length > 0 && path !== 'immediate' && (
-                                                        <AITaskBlock
-                                                            title="医生措施 (Doctor Recommendations)"
-                                                            targetPath={dataPaths.doctor_recommendations || "bundle.data.suggestions.doctor"}
-                                                            targetId={triageId}
-                                                            targetKind="triage_result"
-                                                            originalValue={doctorRecommendations.join('; ')}
-                                                            annotations={annotations}
-                                                            onAnnotationSave={handleAnnotationSave}
-                                                            onAnnotationDelete={handleAnnotationDelete}
-                                                        >
+                                                    {/* 医生建议（始终显示） */}
+                                                    <AITaskBlock
+                                                        title="建议医生 (Doctor Recommendations)"
+                                                        targetPath={dataPaths.doctor_recommendations || "bundle.data.suggestions.doctor"}
+                                                        targetId={triageId}
+                                                        targetKind="triage_result"
+                                                        originalValue={doctorRecommendations.join('; ')}
+                                                        annotations={annotations}
+                                                        onAnnotationSave={handleAnnotationSave}
+                                                        onAnnotationDelete={handleAnnotationDelete}
+                                                    >
+                                                        {doctorRecommendations.length > 0 ? (
                                                             <div>
                                                                 <div className="text-xs font-medium text-slate-600 mb-1">建议措施:</div>
                                                                 <ol className="list-decimal list-inside space-y-1 marker:text-slate-400 marker:font-medium">
@@ -2349,8 +2348,10 @@
                                                                     ))}
                                                                 </ol>
                                                             </div>
-                                                        </AITaskBlock>
-                                                    )}
+                                                        ) : (
+                                                            <p className="text-slate-400 text-xs">暂无医生建议</p>
+                                                        )}
+                                                    </AITaskBlock>
                                                 </div>
 
                                             </div>
@@ -2925,7 +2926,7 @@
                                                     </AITaskBlock>
 
                                                     <AITaskBlock
-                                                        title="建议处置 (Recommendations)"
+                                                        title="建议病人 (Patient Recommendations)"
                                                         targetPath={dataPaths.patient_recommendations || "bundle.data.suggestions.patient"}
                                                         targetId={triageId}
                                                         targetKind="triage_result"
@@ -2944,22 +2945,22 @@
                                                                 </ol>
                                                             </div>
                                                         ) : (
-                                                            <p className="text-slate-400 text-xs">暂无处置建议</p>
+                                                            <p className="text-slate-400 text-xs">暂无患者建议</p>
                                                         )}
                                                     </AITaskBlock>
 
-                                                    {/* 医生措施（如果有且与患者建议不同，则单独显示） */}
-                                                    {doctorRecommendations.length > 0 && path !== 'immediate' && (
-                                                        <AITaskBlock
-                                                            title="医生措施 (Doctor Recommendations)"
-                                                            targetPath={dataPaths.doctor_recommendations || "bundle.data.suggestions.doctor"}
-                                                            targetId={triageId}
-                                                            targetKind="triage_result"
-                                                            originalValue={doctorRecommendations.join('; ')}
-                                                            annotations={annotations}
-                                                            onAnnotationSave={handleAnnotationSave}
-                                                            onAnnotationDelete={handleAnnotationDelete}
-                                                        >
+                                                    {/* 医生建议（始终显示） */}
+                                                    <AITaskBlock
+                                                        title="建议医生 (Doctor Recommendations)"
+                                                        targetPath={dataPaths.doctor_recommendations || "bundle.data.suggestions.doctor"}
+                                                        targetId={triageId}
+                                                        targetKind="triage_result"
+                                                        originalValue={doctorRecommendations.join('; ')}
+                                                        annotations={annotations}
+                                                        onAnnotationSave={handleAnnotationSave}
+                                                        onAnnotationDelete={handleAnnotationDelete}
+                                                    >
+                                                        {doctorRecommendations.length > 0 ? (
                                                             <div>
                                                                 <div className="text-xs font-medium text-slate-600 mb-1">建议措施:</div>
                                                                 <ol className="list-decimal list-inside space-y-1 marker:text-slate-400 marker:font-medium">
@@ -2968,8 +2969,10 @@
                                                                     ))}
                                                                 </ol>
                                                             </div>
-                                                        </AITaskBlock>
-                                                    )}
+                                                        ) : (
+                                                            <p className="text-slate-400 text-xs">暂无医生建议</p>
+                                                        )}
+                                                    </AITaskBlock>
                                                 </div>
 
                                             </div>
