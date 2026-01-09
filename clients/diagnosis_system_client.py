@@ -151,26 +151,44 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         resp.raise_for_status()
         return resp.json()
     
+    def _get_api_prefix(self) -> str:
+        """根据base_url判断API路径前缀"""
+        # 如果base_url包含/db或者agent.gate.bjknrt.com，使用/db前缀
+        if "agent.gate.bjknrt.com" in self.base_url:
+            return "/db"
+        # 如果base_url明确包含/db，使用/db前缀
+        elif "/db" in self.base_url or "/agent/db" in self.base_url:
+            return "/db"
+        # 否则使用/v1前缀（兼容mock服务器和旧版本API）
+        else:
+            return "/v1"
+    
     def get_scenario(self, scenario_id: str) -> dict:
         """获取场景详情"""
         payload = {"scenario_id": scenario_id}
-        return self._post("/db/scenarios/get", payload)
+        prefix = self._get_api_prefix()
+        return self._post(f"{prefix}/scenarios/get", payload)
     
     def get_scenario_bundle(self, scenario_id: str, include_reviews: bool = True, include_signals: bool = True) -> dict:
         """获取场景聚合"""
         payload = {
             "scenario_id": scenario_id,
-            "include_reviews": include_reviews,
-            "include_signals": include_signals  # 添加这个参数以获取raw_signals
+            "include_reviews": include_reviews
         }
-        return self._post("/db/scenarios/bundle", payload)
+        # 只在实际API支持时才添加 include_signals
+        if include_signals:
+            payload["include_signals"] = include_signals
+        
+        prefix = self._get_api_prefix()
+        return self._post(f"{prefix}/scenarios/bundle", payload)
     
     def get_user_ehr(self, user_id: str, fields: Optional[list[str]] = None) -> dict:
         """获取用户EHR"""
         payload = {"user_id": user_id}
         if fields:
             payload["fields"] = fields
-        return self._post("/db/users/ehr", payload)
+        prefix = self._get_api_prefix()
+        return self._post(f"{prefix}/users/ehr", payload)
     
     def get_user_signals(self, user_id: str, **kwargs) -> dict:
         """
@@ -199,7 +217,8 @@ class LiveDiagnosisSystemClient(DiagnosisSystemClient):
         if "limit" in kwargs:
             payload["limit"] = kwargs["limit"]
         
-        return self._post("/db/users/signals", payload)
+        prefix = self._get_api_prefix()
+        return self._post(f"{prefix}/users/signals", payload)
     
     def get_user_scenarios(self, user_id: str, **kwargs) -> dict:
         """
