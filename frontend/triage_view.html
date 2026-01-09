@@ -650,15 +650,20 @@
                     const hrMean = chartData.heartRate.mean;
                     const hrMin = chartData.heartRate.min;
                     const hrMax = chartData.heartRate.max;
-                    const allValues = [...hrMean, ...hrMin, ...hrMax].filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const normalRangeCenter = 80;
-                        const normalRangeSpan = 40;
-                        const margin = normalRangeSpan * 0.5;
-                        const yMin = Math.max(40, Math.floor(normalRangeCenter - normalRangeSpan / 2 - margin));
-                        const yMax = Math.min(120, Math.ceil(normalRangeCenter + normalRangeSpan / 2 + margin));
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...hrMean, 
+                        ...hrMin, 
+                        ...hrMax,
+                        ...(baselineHR !== null ? [baselineHR] : [])
+                    ].filter(v => v !== null);
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 5); // 至少5的边距
+                        const yMin = Math.max(40, Math.floor(displayMin - margin));
+                        const yMax = Math.min(120, Math.ceil(displayMax + margin));
 
                         hrChartInstance.current = new Chart(hrChartRef.current, {
                             type: 'line',
@@ -799,15 +804,20 @@
                     const spo2Mean = chartData.spo2.mean;
                     const spo2Min = chartData.spo2.min;
                     const spo2Max = chartData.spo2.max;
-                    const allValues = [...spo2Mean, ...spo2Min, ...spo2Max].filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const normalRangeCenter = 97.5;
-                        const normalRangeSpan = 5;
-                        const margin = normalRangeSpan * 0.5;
-                        const yMin = Math.max(85, Math.floor((normalRangeCenter - normalRangeSpan / 2 - margin) * 10) / 10);
-                        const yMax = Math.min(100, Math.ceil((normalRangeCenter + normalRangeSpan / 2 + margin) * 10) / 10);
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...spo2Mean, 
+                        ...spo2Min, 
+                        ...spo2Max,
+                        ...(baselineSpo2 !== null ? [baselineSpo2] : [])
+                    ].filter(v => v !== null);
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 1); // 至少1的边距
+                        const yMin = Math.max(85, Math.floor((displayMin - margin) * 10) / 10);
+                        const yMax = Math.min(100, Math.ceil((displayMax + margin) * 10) / 10);
 
                         spo2ChartInstance.current = new Chart(spo2ChartRef.current, {
                             type: 'line',
@@ -938,15 +948,20 @@
                     const tempMean = chartData.temperature.mean;
                     const tempMin = chartData.temperature.min;
                     const tempMax = chartData.temperature.max;
-                    const allValues = [...tempMean, ...tempMin, ...tempMax].filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const normalRangeCenter = 36.65;
-                        const normalRangeSpan = 1.1;
-                        const margin = normalRangeSpan * 0.5;
-                        const yMin = Math.max(35.5, Math.floor((normalRangeCenter - normalRangeSpan / 2 - margin) * 10) / 10);
-                        const yMax = Math.min(38.0, Math.ceil((normalRangeCenter + normalRangeSpan / 2 + margin) * 10) / 10);
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...tempMean, 
+                        ...tempMin, 
+                        ...tempMax,
+                        ...(baselineTemp !== null ? [baselineTemp] : [])
+                    ].filter(v => v !== null);
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 0.2); // 至少0.2的边距
+                        const yMin = Math.max(35.5, Math.floor((displayMin - margin) * 10) / 10);
+                        const yMax = Math.min(38.0, Math.ceil((displayMax + margin) * 10) / 10);
 
                         tempChartInstance.current = new Chart(tempChartRef.current, {
                             type: 'line',
@@ -1079,12 +1094,20 @@
                 if (bpChartRef.current && (chartData.bloodPressure.systolic.mean.some(v => v !== null) || chartData.bloodPressure.diastolic.mean.some(v => v !== null))) {
                     const sbpMean = chartData.bloodPressure.systolic.mean;
                     const dbpMean = chartData.bloodPressure.diastolic.mean;
-                    const allBpValues = [...sbpMean, ...dbpMean].filter(v => v !== null);
-                    if (allBpValues.length > 0) {
-                        const bpMin = Math.min(...allBpValues);
-                        const bpMax = Math.max(...allBpValues);
-                        const yMin = Math.max(40, Math.floor(bpMin - 10));
-                        const yMax = Math.min(180, Math.ceil(bpMax + 10));
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...sbpMean, 
+                        ...dbpMean,
+                        ...(baselineSBP !== null ? [baselineSBP] : []),
+                        ...(baselineDBP !== null ? [baselineDBP] : [])
+                    ].filter(v => v !== null);
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 10); // 至少10的边距
+                        const yMin = Math.max(40, Math.floor(displayMin - margin));
+                        const yMax = Math.min(180, Math.ceil(displayMax + margin));
 
                         bpChartInstance.current = new Chart(bpChartRef.current, {
                             type: 'line',
@@ -1455,13 +1478,18 @@
                 // 心率图表
                 if (hrChartRef.current && processEventData.heartRate.values.length > 0 && processEventData.heartRate.values.some(v => v !== null)) {
                     const hrValues = processEventData.heartRate.values;
-                    const allValues = hrValues.filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const range = dataMax - dataMin;
-                        const yMin = Math.max(40, Math.floor(dataMin - range * 0.2));
-                        const yMax = Math.min(120, Math.ceil(dataMax + range * 0.2));
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...hrValues.filter(v => v !== null),
+                        ...(baselineHR !== null ? [baselineHR] : [])
+                    ];
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 5); // 至少5的边距
+                        const yMin = Math.max(40, Math.floor(displayMin - margin));
+                        const yMax = Math.min(120, Math.ceil(displayMax + margin));
 
                         hrChartInstance.current = new Chart(hrChartRef.current, {
                             type: 'line',
@@ -1509,13 +1537,20 @@
                 if (bpChartRef.current && processEventData.bloodPressure.systolic.length > 0 && processEventData.bloodPressure.systolic.some(v => v !== null)) {
                     const sbpValues = processEventData.bloodPressure.systolic;
                     const dbpValues = processEventData.bloodPressure.diastolic;
-                    const allValues = [...sbpValues, ...dbpValues].filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const range = dataMax - dataMin;
-                        const yMin = Math.max(60, Math.floor(dataMin - range * 0.2));
-                        const yMax = Math.min(180, Math.ceil(dataMax + range * 0.2));
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...sbpValues.filter(v => v !== null),
+                        ...dbpValues.filter(v => v !== null),
+                        ...(baselineSBP !== null ? [baselineSBP] : []),
+                        ...(baselineDBP !== null ? [baselineDBP] : [])
+                    ];
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 10); // 至少10的边距
+                        const yMin = Math.max(60, Math.floor(displayMin - margin));
+                        const yMax = Math.min(180, Math.ceil(displayMax + margin));
 
                         bpChartInstance.current = new Chart(bpChartRef.current, {
                             type: 'line',
@@ -1580,13 +1615,18 @@
                 // 血氧图表
                 if (spo2ChartRef.current && processEventData.spo2.values.length > 0 && processEventData.spo2.values.some(v => v !== null)) {
                     const spo2Values = processEventData.spo2.values;
-                    const allValues = spo2Values.filter(v => v !== null);
-                    if (allValues.length > 0) {
-                        const dataMin = Math.min(...allValues);
-                        const dataMax = Math.max(...allValues);
-                        const range = dataMax - dataMin;
-                        const yMin = Math.max(90, Math.floor(dataMin - range * 0.2));
-                        const yMax = Math.min(100, Math.ceil(dataMax + range * 0.2));
+                    // 收集所有需要显示的值（包括数据和基线）
+                    const allDisplayValues = [
+                        ...spo2Values.filter(v => v !== null),
+                        ...(baselineSpo2 !== null ? [baselineSpo2] : [])
+                    ];
+                    if (allDisplayValues.length > 0) {
+                        const displayMin = Math.min(...allDisplayValues);
+                        const displayMax = Math.max(...allDisplayValues);
+                        const range = displayMax - displayMin;
+                        const margin = Math.max(range * 0.1, 1); // 至少1的边距
+                        const yMin = Math.max(90, Math.floor(displayMin - margin));
+                        const yMax = Math.min(100, Math.ceil(displayMax + margin));
 
                         spo2ChartInstance.current = new Chart(spo2ChartRef.current, {
                             type: 'line',
