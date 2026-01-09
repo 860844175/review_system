@@ -124,14 +124,22 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
             "allergy_history": allergy_history
         }
         
-        # 4. 提取signals信息（兼容两种形态）
-        signals_list = signals.get("data") or signals.get("signals") or []
+        # 4. 提取signals信息（优先从 bundle.data.signals 获取，因为包含 detection_summary 和 overall_summary）
+        bundle_signals = (
+            _dig(bundle, ["bundle", "data", "signals"], []) or
+            _dig(bundle, ["data", "signals"], []) or
+            bundle.get("signals", [])
+        )
         
-        # 从第一个 signal 中提取 metrics_json
+        # 如果 bundle 中没有 signals，回退到 users/signals API 返回的数据
+        signals_list = bundle_signals if bundle_signals else (signals.get("data") or signals.get("signals") or [])
+        
+        # 从第一个 signal 中提取 metrics_json（包含 detection_summary 和 overall_summary）
         metrics = {}
         if signals_list and isinstance(signals_list[0], dict):
             first_signal = signals_list[0]
-            # 路径：signals.data[0].metrics_json.output_json.metrics_json
+            # 优先使用新结构：metrics_json.detection_summary / overall_summary
+            # 回退到旧结构：metrics_json.output_json.metrics_json
             metrics = (
                 _dig(first_signal, ["metrics_json", "output_json", "metrics_json"], {}) or
                 first_signal.get("metrics", {}) or
