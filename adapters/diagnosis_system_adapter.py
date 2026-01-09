@@ -112,6 +112,19 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
         
         # 提取allergy_history（过敏信息）
         allergy_history = ehr_data.get("allergy_history", {}) or {}
+        # 提取主诉（从 symptoms[0].user_feedback）
+        chief_complaint = ""
+        bundle_data = (
+            _dig(bundle, ["bundle", "data"], {}) or
+            bundle.get("data", {})
+        )
+        symptoms = bundle_data.get("symptoms", [])
+        if symptoms and isinstance(symptoms, list) and len(symptoms) > 0:
+            first_symptom = symptoms[0]
+            if isinstance(first_symptom, dict):
+                user_feedback = first_symptom.get("user_feedback", [])
+                if user_feedback and isinstance(user_feedback, list):
+                    chief_complaint = "、".join([str(item) for item in user_feedback if item])
         
         patient_info = {
             "demographics": demographics,
@@ -121,7 +134,8 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
                 "diagnoses": diagnoses,
                 "diagnoses_str": "、".join(diagnoses) if diagnoses else "无"
             },
-            "allergy_history": allergy_history
+            "allergy_history": allergy_history,
+            "chief_complaint": chief_complaint  # 新增字段
         }
         
         # 4. 提取signals信息（优先从 bundle.data.signals 获取，因为包含 detection_summary 和 overall_summary）
@@ -136,15 +150,70 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
         
         # 从第一个 signal 中提取 metrics_json（包含 detection_summary 和 overall_summary）
         metrics = {}
+        detection_summary = {}
+        overall_summary = {}
         if signals_list and isinstance(signals_list[0], dict):
             first_signal = signals_list[0]
-            # 优先使用新结构：metrics_json.detection_summary / overall_summary
-            # 回退到旧结构：metrics_json.output_json.metrics_json
+            metrics_json = first_signal.get("metrics_json", {})
+            if isinstance(metrics_json, dict):
+                detection_summary = metrics_json.get("detection_summary", {})
+                overall_summary = metrics_json.get("overall_summary", {})
+            # 回退到旧结构
             metrics = (
                 _dig(first_signal, ["metrics_json", "output_json", "metrics_json"], {}) or
                 first_signal.get("metrics", {}) or
                 {}
             )
+        
+        # 从 detection_summary 提取触发时刻的生理指标
+        hr_detection = detection_summary.get("心率", {})
+        hr_trigger = hr_detection.get("mean") if isinstance(hr_detection, dict) else None
+        
+        bp_detection = detection_summary.get("血压", {})
+        sbp_detection = bp_detection.get("收缩压", {}) if isinstance(bp_detection, dict) else {}
+        dbp_detection = bp_detection.get("舒张压", {}) if isinstance(bp_detection, dict) else {}
+        sbp_trigger = sbp_detection.get("mean") if isinstance(sbp_detection, dict) else None
+        dbp_trigger = dbp_detection.get("mean") if isinstance(dbp_detection, dict) else None
+        
+        spo2_detection = detection_summary.get("血氧饱和度", {})
+        spo2_trigger = spo2_detection.get("mean") if isinstance(spo2_detection, dict) else None
+        
+        temp_detection = detection_summary.get("体温", {})
+        temp_trigger = temp_detection.get("mean") if isinstance(temp_detection, dict) else None
+        
+        # 从 overall_summary 提取前1小时范围
+        hr_overall = overall_summary.get("心率", {})
+        bp_overall = overall_summary.get("血压", {})
+        sbp_overall = bp_overall.get("收缩压", {}) if isinstance(bp_overall, dict) else {}
+        dbp_overall = bp_overall.get("舒张压", {}) if isinstance(bp_overall, dict) else {}
+        spo2_overall = overall_summary.get("血氧饱和度", {})
+        temp_overall = overall_summary.get("体温", {})
+        
+        # 构建 vital_signs 对象（供前端使用）
+        vital_signs = {
+            "heartrate": hr_trigger,
+            "sbp": sbp_trigger,
+            "dbp": dbp_trigger,
+            "o2sat": spo2_trigger,
+            "temperature": temp_trigger,
+            "ranges": {
+                "heart_rate": {"min": hr_overall.get("min"), "max": hr_overall.get("max")} if isinstance(hr_overall, dict) and hr_overall.get("min") is not None else None,
+                "blood_pressure": {
+                    "systolic": {"min": sbp_overall.get("min"), "max": sbp_overall.get("max")} if isinstance(sbp_overall, dict) and sbp_overall.get("min") is not None else None,
+                    "diastolic": {"min": dbp_overall.get("min"), "max": dbp_overall.get("max")} if isinstance(dbp_overall, dict) and dbp_overall.get("min") is not None else None
+                },
+                "spo2": {"min": spo2_overall.get("min"), "max": spo2_overall.get("max")} if isinstance(spo2_overall, dict) and spo2_overall.get("min") is not None else None,
+                "temperature": {"min": temp_overall.get("min"), "max": temp_overall.get("max")} if isinstance(temp_overall, dict) and temp_overall.get("min") is not None else None
+            },
+            "baselines": {
+                "heart_rate": baseline_vitals.get("心率"),
+                "blood_pressure": {
+                    "systolic": baseline_vitals.get("血压", {}).get("收缩压") if isinstance(baseline_vitals.get("血压"), dict) else None,
+                    "diastolic": baseline_vitals.get("血压", {}).get("舒张压") if isinstance(baseline_vitals.get("血压"), dict) else None
+                },
+                "temperature": baseline_vitals.get("体温")
+            }
+        }
         
         signals_info = {
             "summary_text": (
@@ -153,7 +222,8 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
                 else ""
             ) or "",
             "metrics": metrics,
-            "signals_list": signals_list  # 保存完整列表，用于后续提取
+            "signals_list": signals_list,  # 保存完整列表，用于后续提取
+            "vital_signs": vital_signs  # 新增：供前端 VitalSignsTable 使用
         }
         
         # 5. 提取suggestions（宽松匹配多种路径）

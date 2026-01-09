@@ -1844,7 +1844,8 @@
             const isUrgent = path === 'immediate' || (esiLevel !== null && esiLevel <= 3);
 
             const demographics = patient.demographics || {};
-            const vitals = patient.baseline_vitals || {};
+            // 优先使用 signals.vital_signs（包含触发时刻值、范围、基线值），回退到 baseline_vitals
+            const vitals = signals?.vital_signs || patient.baseline_vitals || {};
 
             // 获取紧急徽章颜色
             const getUrgencyBadgeClass = (level) => {
@@ -2087,7 +2088,7 @@
                                                 <div className="xl:col-span-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
                                                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
-                                                        {signals.summary_text || triage.rationale || triage.next_operation || '暂无主诉信息'}
+                                                        {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
                                                     </div>
                                                 </div>
 
@@ -2701,7 +2702,7 @@
                                                 <div className="xl:col-span-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
                                                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 text-sm leading-relaxed">
-                                                        {signals.summary_text || triage.rationale || triage.next_operation || '暂无主诉信息'}
+                                                        {patient?.chief_complaint || dialogueMessages?.find(m => m.type === 'patient')?.content || triage.rationale?.substring(0, 200) || '暂无主诉信息'}
                                                     </div>
                                                 </div>
 
