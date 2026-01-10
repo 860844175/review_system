@@ -145,6 +145,69 @@
                 recommendedAction: "建议措施:",
                 rationale: "判断理由 (Rationale)",
                 
+                // 患者信息相关
+                patient: "患者",
+                yearsOld: "岁",
+                medicalHistory: "病史",
+                diseases: "疾病：",
+                currentMedications: "当前用药：",
+                allergies: "过敏：",
+                
+                // 信号和可视化相关
+                signalDetectionVisualization: "信号检测可视化",
+                aiPhysiologicalSignalAnalysis: "AI生理信号状态分析",
+                aiClinicalAnalysisReport: "AI 临床分析报告",
+                signalObservation: "信号观察",
+                timePeriodArchiveInference: "时段与档案推理",
+                comprehensiveJudgment: "综合判断",
+                
+                // 症状相关
+                symptomRecognition: "症状识别 (Symptom Recognition)",
+                patientSelfReport: "患者自述",
+                chiefComplaintSummary: "主诉摘要 (Chief Complaint)",
+                items: "项",
+                
+                // 生理指标相关
+                bloodPressure: "血压",
+                heartRate: "心率",
+                bloodOxygen: "血氧",
+                temperature: "体温",
+                patientBaseline: "患者基线",
+                
+                // 时间相关
+                time: "时间",
+                eventDetails: "事件详情 (1小时)",
+                longTermTrend: "长期趋势 (30天)",
+                
+                // 图表标签相关
+                heartRateLabel: "心率 (bpm)",
+                bloodPressureLabel: "血压 (mmHg)",
+                temperatureLabel: "体温 (°C)",
+                systolicPressure: "收缩压",
+                diastolicPressure: "舒张压",
+                baselineDiastolic: "基线（舒张压）",
+                baselineSystolic: "基线（收缩压）",
+                baselineSystolicPressure: "收缩压基线",
+                baselineDiastolicPressure: "舒张压基线",
+                normalRange: "正常范围上限",
+                normalRangeText: "正常范围 (60-100 bpm)",
+                systolicNormalRangeUpper: "收缩压正常范围上限",
+                diastolicNormalRangeUpper: "舒张压正常范围上限",
+                
+                // 图表数据标签
+                minValue: "最小值",
+                fluctuationRange: "波动范围",
+                baselineValue: "基线值",
+                normalRangeLower: "正常范围下限",
+                systolicNormalRangeLower: "收缩压正常范围下限",
+                diastolicNormalRangeLower: "舒张压正常范围下限",
+                lowestValue: "最低值",
+                heartRateTooltip: "心率",
+                rangeTooltip: "范围",
+                belowNormalWarning: " ⚠️ 低于正常值",
+                averageTooltip: "平均",
+                temperatureTooltip: "体温",
+                
                 // 批注相关
                 doctorAnnotation: "医生批注：",
                 inputAnnotation: "输入批注...",
@@ -242,6 +305,55 @@
                 doctorRecommendations: "Doctor Recommendations",
                 recommendedAction: "Recommended Action:",
                 rationale: "Rationale",
+                
+                // 患者信息相关
+                patient: "Patient",
+                yearsOld: "y/o",
+                medicalHistory: "Medical History",
+                diseases: "Diseases:",
+                currentMedications: "Current Medications:",
+                allergies: "Allergies:",
+                
+                // 信号和可视化相关
+                signalDetectionVisualization: "Signal Detection Visualization",
+                aiPhysiologicalSignalAnalysis: "AI Physiological Signal Status Analysis",
+                aiClinicalAnalysisReport: "AI Clinical Analysis Report",
+                signalObservation: "Signal Observation",
+                timePeriodArchiveInference: "Time Period & Archive Inference",
+                comprehensiveJudgment: "Comprehensive Judgment",
+                
+                // 症状相关
+                symptomRecognition: "Symptom Recognition",
+                patientSelfReport: "Patient Self-Report",
+                chiefComplaintSummary: "Chief Complaint Summary",
+                items: "items",
+                
+                // 生理指标相关
+                bloodPressure: "Blood Pressure",
+                heartRate: "Heart Rate",
+                bloodOxygen: "SpO2",
+                temperature: "Temperature",
+                patientBaseline: "Patient Baseline",
+                
+                // 时间相关
+                time: "Time",
+                eventDetails: "Event Details (1 hour)",
+                longTermTrend: "Long-term Trend (30 days)",
+                
+                // 图表标签相关
+                heartRateLabel: "Heart Rate (bpm)",
+                bloodPressureLabel: "Blood Pressure (mmHg)",
+                temperatureLabel: "Temperature (°C)",
+                systolicPressure: "Systolic Pressure",
+                diastolicPressure: "Diastolic Pressure",
+                baselineDiastolic: "Baseline (Diastolic)",
+                baselineSystolic: "Baseline (Systolic)",
+                baselineSystolicPressure: "Systolic Baseline",
+                baselineDiastolicPressure: "Diastolic Baseline",
+                normalRange: "Normal Range Upper Limit",
+                normalRangeText: "Normal Range (60-100 bpm)",
+                systolicNormalRangeUpper: "Systolic Normal Range Upper Limit",
+                diastolicNormalRangeUpper: "Diastolic Normal Range Upper Limit",
                 
                 // 批注相关
                 doctorAnnotation: "Doctor Annotation:",
@@ -520,8 +632,12 @@
             const isAbnormal = (label, currentValue, baselineValue) => {
                 if (!currentValue || currentValue === '--') return false;
 
+                // 获取语言配置（在函数开始时获取一次）
+                const currentLang = getLanguage();
+                const t = LANGUAGE_CONFIG[currentLang];
+
                 // 血压：收缩压 ≥ 140 或 舒张压 ≥ 90，或超过基线值
-                if (label === '血压') {
+                if (label === t.bloodPressure) {
                     // 如果是字符串格式 "145/91"，需要解析
                     if (typeof currentValue === 'string' && currentValue.includes('/')) {
                         const parts = currentValue.split('/');
@@ -546,7 +662,7 @@
                 if (isNaN(curr)) return false;
 
                 // 心率：< 60 或 > 100，或超过基线值
-                if (label === '心率') {
+                if (label === t.heartRate) {
                     if (curr < 60 || curr > 100) return true;
                     if (baselineValue) {
                         const base = typeof baselineValue === 'number' ? baselineValue : parseFloat(baselineValue);
@@ -556,7 +672,7 @@
                 }
 
                 // 血氧：< 95%，或超过基线值（血氧下降是异常）
-                if (label === '血氧') {
+                if (label === t.bloodOxygen) {
                     if (curr < 95) return true;
                     if (baselineValue) {
                         const base = typeof baselineValue === 'number' ? baselineValue : parseFloat(baselineValue);
@@ -566,7 +682,7 @@
                 }
 
                 // 体温：< 36.1 或 > 37.2，或超过基线值
-                if (label === '体温') {
+                if (label === t.temperature) {
                     if (curr < 36.1 || curr > 37.2) return true;
                     if (baselineValue) {
                         const base = typeof baselineValue === 'number' ? baselineValue : parseFloat(baselineValue);
@@ -580,7 +696,7 @@
 
             const indicators = [
                 {
-                    label: '血压',
+                    label: t.bloodPressure,
                     current: (vitals.sbp && vitals.dbp) ? `${vitals.sbp}/${vitals.dbp}`
                         : (signals.metrics?.blood_pressure
                             ? `${Math.round(signals.metrics.blood_pressure.systolic?.mean || signals.metrics.blood_pressure.systolic)}/${Math.round(signals.metrics.blood_pressure.diastolic?.mean || signals.metrics.blood_pressure.diastolic)}`
@@ -596,7 +712,7 @@
                     )
                 },
                 {
-                    label: '心率',
+                    label: t.heartRate,
                     current: vitals.heartrate || getCurrentValue('心率', 'heart_rate') || '--',
                     range: formatRange(ranges.heart_rate),
                     baseline: baselines.heart_rate || vitals['心率'] || '--',
@@ -607,7 +723,7 @@
                     )
                 },
                 {
-                    label: '血氧',
+                    label: t.bloodOxygen,
                     current: vitals.o2sat || signals.metrics?.spo2?.mean || vitals['血氧'] || '--',
                     range: formatRange(ranges.spo2),
                     baseline: '--',
@@ -615,7 +731,7 @@
                     trend: (vitals.o2sat && vitals.o2sat >= 95) ? 'stable' : (vitals.o2sat ? 'down' : null)
                 },
                 {
-                    label: '体温',
+                    label: t.temperature,
                     current: vitals.temperature || vitals['体温'] || '--',
                     range: formatRange(ranges.temperature),
                     baseline: baselines.temperature || vitals['体温'] || '--',
@@ -674,6 +790,9 @@
 
         // --- Signal 可视化组件（Chart.js 图表版，参考模板风格） ---
         const SignalVisualization = ({ signals, data, viewMode }) => {
+            // 获取当前语言配置
+            const currentLang = getLanguage();
+            const t = LANGUAGE_CONFIG[currentLang];
             const hrChartRef = React.useRef(null);
             const spo2ChartRef = React.useRef(null);
             const tempChartRef = React.useRef(null);
@@ -960,7 +1079,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '波动范围',
+                                        label: t.fluctuationRange,
                                         data: hrMax,
                                         borderColor: 'rgba(239, 68, 68, 0.2)',
                                         backgroundColor: 'rgba(239, 68, 68, 0.12)',
@@ -970,7 +1089,7 @@
                                         order: 2
                                     },
                                     {
-                                        label: '心率 (bpm)',
+                                        label: t.heartRateLabel,
                                         data: hrMean,
                                         borderColor: '#ef4444',
                                         backgroundColor: 'transparent',
@@ -983,7 +1102,7 @@
                                         order: 1
                                     },
                                     {
-                                        label: '正常范围上限',
+                                        label: t.normalRange,
                                         data: new Array(chartData.labels.length).fill(100),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -993,7 +1112,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '正常范围下限',
+                                        label: t.normalRangeLower,
                                         data: new Array(chartData.labels.length).fill(60),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1004,7 +1123,7 @@
                                     },
                                     // 患者基线 - 灰色细实线
                                     ...(baselineHR !== null ? [{
-                                        label: '患者基线',
+                                        label: t.patientBaseline,
                                         data: new Array(chartData.labels.length).fill(baselineHR),
                                         borderColor: '#B0B0B0',
                                         borderDash: [],
@@ -1025,23 +1144,23 @@
                                         display: true,
                                         filter: (legendItem) => {
                                             const text = legendItem.text;
-                                            return text === '心率 (bpm)' ||
-                                                text === '正常范围上限' ||
-                                                (text === '患者基线' && baselineHR !== null);
+                                            return text === t.heartRateLabel ||
+                                                text === t.normalRange ||
+                                                (text === t.patientBaseline && baselineHR !== null);
                                         },
                                         labels: {
                                             generateLabels: (chart) => {
                                                 const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
                                                 const filtered = original.filter((label) => {
                                                     const text = label.text;
-                                                    return text === '心率 (bpm)' ||
-                                                        text === '正常范围上限' ||
-                                                        (text === '患者基线' && baselineHR !== null);
+                                                    return text === t.heartRateLabel ||
+                                                        text === t.normalRange ||
+                                                        (text === t.patientBaseline && baselineHR !== null);
                                                 });
                                                 return filtered.map((label) => {
-                                                    if (label.text === '正常范围上限') {
-                                                        return { ...label, text: '正常范围 (60-100 bpm)', fontColor: '#6b7280' };
-                                                    } else if (label.text === '患者基线') {
+                                                    if (label.text === t.normalRange) {
+                                                        return { ...label, text: t.normalRangeText, fontColor: '#6b7280' };
+                                                    } else if (label.text === t.patientBaseline) {
                                                         return { ...label, text: `基线 (${baselineHR} bpm)`, fontColor: '#9ca3af' };
                                                     }
                                                     return label;
@@ -1060,10 +1179,10 @@
                                                 const index = context.dataIndex;
                                                 if (context.datasetIndex === 0) {
                                                     const minVal = hrMin[index];
-                                                    const warning = minVal < 60 ? ' ⚠️ 低于正常值' : '';
-                                                    return `最低值: ${minVal}${warning}`;
+                                                    const warning = minVal < 60 ? t.belowNormalWarning : '';
+                                                    return `${t.lowestValue}: ${minVal}${warning}`;
                                                 } else if (context.datasetIndex === 2) {
-                                                    return `心率: ${hrMean[index]} bpm (范围: ${hrMin[index]}-${hrMax[index]} bpm)`;
+                                                    return `${t.heartRateTooltip}: ${hrMean[index]} bpm (${t.rangeTooltip}: ${hrMin[index]}-${hrMax[index]} bpm)`;
                                                 }
                                                 return null;
                                             }
@@ -1105,7 +1224,7 @@
                                 labels: chartData.labels,
                                 datasets: [
                                     {
-                                        label: '最低值',
+                                        label: t.lowestValue,
                                         data: spo2Min,
                                         borderColor: 'transparent',
                                         backgroundColor: 'transparent',
@@ -1114,7 +1233,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '波动范围',
+                                        label: t.fluctuationRange,
                                         data: spo2Max,
                                         borderColor: 'rgba(59, 130, 246, 0.2)',
                                         backgroundColor: 'rgba(59, 130, 246, 0.12)',
@@ -1148,7 +1267,7 @@
                                     },
                                     // 患者基线 - 灰色细实线
                                     ...(baselineSpo2 !== null ? [{
-                                        label: '患者基线',
+                                        label: t.patientBaseline,
                                         data: new Array(chartData.labels.length).fill(baselineSpo2),
                                         borderColor: '#B0B0B0',
                                         borderDash: [],
@@ -1185,7 +1304,7 @@
                                                 return filtered.map((label) => {
                                                     if (label.text === '正常范围') {
                                                         return { ...label, text: '正常范围 (≥95%)', fontColor: '#6b7280' };
-                                                    } else if (label.text === '患者基线') {
+                                                    } else if (label.text === t.patientBaseline) {
                                                         return { ...label, text: `基线 (${baselineSpo2}%)`, fontColor: '#9ca3af' };
                                                     }
                                                     return label;
@@ -1204,10 +1323,10 @@
                                                 const index = context.dataIndex;
                                                 if (context.datasetIndex === 0) {
                                                     const minVal = spo2Min[index];
-                                                    const warning = minVal < 95 ? ' ⚠️ 低于正常值' : '';
-                                                    return `最低值: ${minVal}%${warning}`;
+                                                    const warning = minVal < 95 ? t.belowNormalWarning : '';
+                                                    return `${t.lowestValue}: ${minVal}%${warning}`;
                                                 } else if (context.datasetIndex === 2) {
-                                                    return `平均: ${spo2Mean[index]}% (范围: ${spo2Min[index]}-${spo2Max[index]}%)`;
+                                                    return `${t.averageTooltip}: ${spo2Mean[index]}% (${t.rangeTooltip}: ${spo2Min[index]}-${spo2Max[index]}%)`;
                                                 }
                                                 return null;
                                             }
@@ -1249,7 +1368,7 @@
                                 labels: chartData.labels,
                                 datasets: [
                                     {
-                                        label: '最低值',
+                                        label: t.lowestValue,
                                         data: tempMin,
                                         borderColor: 'transparent',
                                         backgroundColor: 'transparent',
@@ -1258,7 +1377,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '波动范围',
+                                        label: t.fluctuationRange,
                                         data: tempMax,
                                         borderColor: 'rgba(245, 158, 11, 0.2)',
                                         backgroundColor: 'rgba(245, 158, 11, 0.12)',
@@ -1268,7 +1387,7 @@
                                         order: 2
                                     },
                                     {
-                                        label: '体温 (°C)',
+                                        label: t.temperatureLabel,
                                         data: tempMean,
                                         borderColor: '#f59e0b',
                                         backgroundColor: 'transparent',
@@ -1281,7 +1400,7 @@
                                         order: 1
                                     },
                                     {
-                                        label: '正常范围上限',
+                                        label: t.normalRange,
                                         data: new Array(chartData.labels.length).fill(37.2),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1291,7 +1410,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '正常范围下限',
+                                        label: t.normalRangeLower,
                                         data: new Array(chartData.labels.length).fill(36.1),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1302,7 +1421,7 @@
                                     },
                                     // 患者基线 - 灰色细实线
                                     ...(baselineTemp !== null ? [{
-                                        label: '患者基线',
+                                        label: t.patientBaseline,
                                         data: new Array(chartData.labels.length).fill(baselineTemp),
                                         borderColor: '#B0B0B0',
                                         borderDash: [],
@@ -1323,23 +1442,23 @@
                                         display: true,
                                         filter: (legendItem) => {
                                             const text = legendItem.text;
-                                            return text === '体温 (°C)' ||
-                                                text === '正常范围上限' ||
-                                                (text === '患者基线' && baselineTemp !== null);
+                                            return text === t.temperatureLabel ||
+                                                text === t.normalRange ||
+                                                (text === t.patientBaseline && baselineTemp !== null);
                                         },
                                         labels: {
                                             generateLabels: (chart) => {
                                                 const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
                                                 const filtered = original.filter((label) => {
                                                     const text = label.text;
-                                                    return text === '体温 (°C)' ||
-                                                        text === '正常范围上限' ||
-                                                        (text === '患者基线' && baselineTemp !== null);
+                                                    return text === t.temperatureLabel ||
+                                                        text === t.normalRange ||
+                                                        (text === t.patientBaseline && baselineTemp !== null);
                                                 });
                                                 return filtered.map((label) => {
-                                                    if (label.text === '正常范围上限') {
+                                                    if (label.text === t.normalRange) {
                                                         return { ...label, text: '正常范围 (36.1-37.2°C)', fontColor: '#6b7280' };
-                                                    } else if (label.text === '患者基线') {
+                                                    } else if (label.text === t.patientBaseline) {
                                                         return { ...label, text: `基线 (${baselineTemp}°C)`, fontColor: '#9ca3af' };
                                                     }
                                                     return label;
@@ -1356,7 +1475,7 @@
                                             title: (context) => context[0].label,
                                             label: (context) => {
                                                 const index = context.dataIndex;
-                                                return `体温: ${tempMean[index]} °C (范围: ${tempMin[index]}-${tempMax[index]} °C)`;
+                                                return `${t.temperatureTooltip}: ${tempMean[index]} °C (${t.rangeTooltip}: ${tempMin[index]}-${tempMax[index]} °C)`;
                                             }
                                         }
                                     }
@@ -1395,7 +1514,7 @@
                                 labels: chartData.labels,
                                 datasets: [
                                     {
-                                        label: '收缩压',
+                                        label: t.systolicPressure,
                                         data: sbpMean,
                                         borderColor: '#dc2626',
                                         backgroundColor: 'transparent',
@@ -1408,7 +1527,7 @@
                                         order: 1
                                     },
                                     {
-                                        label: '舒张压',
+                                        label: t.diastolicPressure,
                                         data: dbpMean,
                                         borderColor: '#f59e0b',
                                         backgroundColor: 'transparent',
@@ -1422,7 +1541,7 @@
                                     },
                                     // 收缩压正常范围虚线
                                     {
-                                        label: '收缩压正常范围上限',
+                                        label: t.systolicNormalRangeUpper,
                                         data: new Array(chartData.labels.length).fill(140),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1432,7 +1551,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '收缩压正常范围下限',
+                                        label: t.systolicNormalRangeLower,
                                         data: new Array(chartData.labels.length).fill(90),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1443,7 +1562,7 @@
                                     },
                                     // 舒张压正常范围虚线
                                     {
-                                        label: '舒张压正常范围上限',
+                                        label: t.diastolicNormalRangeUpper,
                                         data: new Array(chartData.labels.length).fill(90),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1453,7 +1572,7 @@
                                         order: 3
                                     },
                                     {
-                                        label: '舒张压正常范围下限',
+                                        label: t.diastolicNormalRangeLower,
                                         data: new Array(chartData.labels.length).fill(60),
                                         borderColor: 'rgba(34, 197, 94, 0.5)',
                                         borderDash: [6, 3],
@@ -1464,7 +1583,7 @@
                                     },
                                     // 患者基线 - 灰色细实线
                                     ...(baselineSBP !== null ? [{
-                                        label: '收缩压基线',
+                                        label: t.baselineSystolicPressure,
                                         data: new Array(chartData.labels.length).fill(baselineSBP),
                                         borderColor: '#B0B0B0',
                                         borderDash: [],
@@ -1474,7 +1593,7 @@
                                         order: 2
                                     }] : []),
                                     ...(baselineDBP !== null ? [{
-                                        label: '舒张压基线',
+                                        label: t.baselineDiastolicPressure,
                                         data: new Array(chartData.labels.length).fill(baselineDBP),
                                         borderColor: '#B0B0B0',
                                         borderDash: [],
@@ -1495,29 +1614,29 @@
                                         display: true,
                                         filter: (legendItem) => {
                                             const text = legendItem.text;
-                                            return text === '收缩压' ||
-                                                text === '舒张压' ||
-                                                text === '收缩压正常范围上限' ||
-                                                (text === '收缩压基线' && baselineSBP !== null) ||
-                                                (text === '舒张压基线' && baselineDBP !== null);
+                                            return text === t.systolicPressure ||
+                                                text === t.diastolicPressure ||
+                                                text === t.systolicNormalRangeUpper ||
+                                                (text === t.baselineSystolicPressure && baselineSBP !== null) ||
+                                                (text === t.baselineDiastolicPressure && baselineDBP !== null);
                                         },
                                         labels: {
                                             generateLabels: (chart) => {
                                                 const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
                                                 const filtered = original.filter((label) => {
                                                     const text = label.text;
-                                                    return text === '收缩压' ||
-                                                        text === '舒张压' ||
-                                                        text === '收缩压正常范围上限' ||
-                                                        (text === '收缩压基线' && baselineSBP !== null) ||
-                                                        (text === '舒张压基线' && baselineDBP !== null);
+                                                    return text === t.systolicPressure ||
+                                                        text === t.diastolicPressure ||
+                                                        text === t.systolicNormalRangeUpper ||
+                                                        (text === t.baselineSystolicPressure && baselineSBP !== null) ||
+                                                        (text === t.baselineDiastolicPressure && baselineDBP !== null);
                                                 });
                                                 return filtered.map((label) => {
-                                                    if (label.text === '收缩压正常范围上限') {
+                                                    if (label.text === t.systolicNormalRangeUpper) {
                                                         return { ...label, text: '正常范围 (收缩压90-140, 舒张压60-90)', fontColor: '#6b7280' };
-                                                    } else if (label.text === '收缩压基线') {
+                                                    } else if (label.text === t.baselineSystolicPressure) {
                                                         return { ...label, text: `基线 (${baselineSBP}/${baselineDBP !== null ? baselineDBP : '--'} mmHg)`, fontColor: '#9ca3af' };
-                                                    } else if (label.text === '舒张压基线') {
+                                                    } else if (label.text === t.baselineDiastolicPressure) {
                                                         // 已经在收缩压基线中显示了
                                                         return null;
                                                     }
@@ -1569,7 +1688,7 @@
                                         <div className="w-2 h-2 rounded-full bg-red-600"></div>
                                         <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-700">血压 (mmHg)</span>
+                                    <span className="text-xs font-semibold text-slate-700">{t.bloodPressureLabel}</span>
                                 </div>
                             </div>
                             <div style={{ height: '180px', position: 'relative' }}>
@@ -1584,7 +1703,7 @@
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                    <span className="text-xs font-semibold text-slate-700">心率 (bpm)</span>
+                                    <span className="text-xs font-semibold text-slate-700">{t.heartRateLabel}</span>
                                 </div>
                             </div>
                             <div style={{ height: '180px', position: 'relative' }}>
@@ -1628,6 +1747,9 @@
 
         // --- Raw Signal 可视化组件（1小时内的原始事件时间序列数据） ---
         const RawSignalVisualization = ({ rawSignals, data, viewMode }) => {
+            // 获取当前语言配置
+            const currentLang = getLanguage();
+            const t = LANGUAGE_CONFIG[currentLang];
             const hrChartRef = React.useRef(null);
             const spo2ChartRef = React.useRef(null);
             const bpChartRef = React.useRef(null);
@@ -1820,7 +1942,7 @@
                                 labels: processEventData.heartRate.labels,
                                 datasets: [
                                     {
-                                        label: '心率 (bpm)',
+                                        label: t.heartRateLabel,
                                         data: hrValues,
                                         borderColor: 'rgb(239, 68, 68)',
                                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -1849,7 +1971,7 @@
                                 },
                                 scales: {
                                     y: { min: yMin, max: yMax, title: { display: true, text: 'bpm' } },
-                                    x: { title: { display: true, text: '时间' } }
+                                    x: { title: { display: true, text: t.time } }
                                 }
                             }
                         });
@@ -1881,7 +2003,7 @@
                                 labels: processEventData.bloodPressure.labels,
                                 datasets: [
                                     {
-                                        label: '收缩压 (mmHg)',
+                                        label: `${t.systolicPressure} (mmHg)`,
                                         data: sbpValues,
                                         borderColor: 'rgb(239, 68, 68)',
                                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -1891,7 +2013,7 @@
                                         fill: false
                                     },
                                     {
-                                        label: '舒张压 (mmHg)',
+                                        label: `${t.diastolicPressure} (mmHg)`,
                                         data: dbpValues,
                                         borderColor: 'rgb(59, 130, 246)',
                                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -1901,7 +2023,7 @@
                                         fill: false
                                     },
                                     ...(baselineSBP && baselineDBP ? [{
-                                        label: '基线（收缩压）',
+                                        label: t.baselineSystolic,
                                         data: new Array(sbpValues.length).fill(baselineSBP),
                                         borderColor: 'rgba(239, 68, 68, 0.3)',
                                         backgroundColor: 'transparent',
@@ -1909,7 +2031,7 @@
                                         pointRadius: 0,
                                         fill: false
                                     }, {
-                                        label: '基线（舒张压）',
+                                        label: t.baselineDiastolic,
                                         data: new Array(dbpValues.length).fill(baselineDBP),
                                         borderColor: 'rgba(59, 130, 246, 0.3)',
                                         backgroundColor: 'transparent',
@@ -1928,7 +2050,7 @@
                                 },
                                 scales: {
                                     y: { min: yMin, max: yMax, title: { display: true, text: 'mmHg' } },
-                                    x: { title: { display: true, text: '时间' } }
+                                    x: { title: { display: true, text: t.time } }
                                 }
                             }
                         });
@@ -1986,7 +2108,7 @@
                                 },
                                 scales: {
                                     y: { min: yMin, max: yMax, title: { display: true, text: '%' } },
-                                    x: { title: { display: true, text: '时间' } }
+                                    x: { title: { display: true, text: t.time } }
                                 }
                             }
                         });
@@ -2034,7 +2156,7 @@
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                        <span className="text-xs font-semibold text-slate-700">心率 (bpm)</span>
+                                        <span className="text-xs font-semibold text-slate-700">{t.heartRateLabel}</span>
                                     </div>
                                 </div>
                                 <div style={{ height: '180px', position: 'relative' }}>
@@ -2052,7 +2174,7 @@
                                             <div className="w-2 h-2 rounded-full bg-red-600"></div>
                                             <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                                         </div>
-                                        <span className="text-xs font-semibold text-slate-700">血压 (mmHg)</span>
+                                        <span className="text-xs font-semibold text-slate-700">{t.bloodPressureLabel}</span>
                                     </div>
                                 </div>
                                 <div style={{ height: '180px', position: 'relative' }}>
@@ -2117,7 +2239,7 @@
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                         </svg>
                                         <h3 className="text-sm font-bold text-slate-800">
-                                            AI生理信号状态分析
+                                            {t.aiPhysiologicalSignalAnalysis}
                                         </h3>
                                     </div>
                                 </div>
@@ -2844,7 +2966,7 @@
                                                             <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientSex}</span>
                                                         )}
                                                         {patientAge && (
-                                                            <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientAge}岁</span>
+                                                            <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientAge} {t.yearsOld}</span>
                                                         )}
                                                     </div>
                                                     {esiLevel !== null && esiLevel !== undefined && (
@@ -2856,23 +2978,23 @@
                                                 {/* 病史信息 */}
                                                 {(patient.meds && patient.meds.length > 0) || (patient.medical_history && (patient.medical_history.diagnoses_str || patient.medical_history.diagnoses)) || allergyList ? (
                                                     <div className="mt-2 pt-2 border-t border-slate-100">
-                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">病史</div>
+                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
                                                         <div className="text-xs text-slate-600 space-y-0.5">
                                                             {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) && (
                                                                 <div>
-                                                                    <span className="font-medium">疾病：</span>
+                                                                    <span className="font-medium">{t.diseases}</span>
                                                                     <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、') || '无'}</span>
                                                                 </div>
                                                             )}
                                                             {patient.meds && patient.meds.length > 0 && (
                                                                 <div>
-                                                                    <span className="font-medium">当前用药：</span>
+                                                                    <span className="font-medium">{t.currentMedications}</span>
                                                                     <span>{patient.meds.join('、')}</span>
                                                                 </div>
                                                             )}
                                                             {allergyList && (
                                                                 <div>
-                                                                    <span className="font-medium">过敏：</span>
+                                                                    <span className="font-medium">{t.allergies}</span>
                                                                     <span>{allergyList.join('、')}</span>
                                                                 </div>
                                                             )}
@@ -2892,7 +3014,7 @@
                                         <div className="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-emerald-100 p-1 rounded text-emerald-600"><TrendingUp size={16} /></div>
-                                                <h3 className="font-bold text-slate-800 text-sm">信号检测可视化</h3>
+                                                <h3 className="font-bold text-slate-800 text-sm">{t.signalDetectionVisualization}</h3>
                                             </div>
                                         </div>
                                         
@@ -2907,7 +3029,7 @@
                                                     }`}
                                                     onClick={() => setSignalTab('event')}
                                                 >
-                                                    事件详情 (1小时)
+                                                    {t.eventDetails}
                                                 </button>
                                                 <button
                                                     className={`px-4 py-2 text-xs font-semibold transition-colors ${
@@ -2917,7 +3039,7 @@
                                                     }`}
                                                     onClick={() => setSignalTab('trend')}
                                                 >
-                                                    长期趋势 (30天)
+                                                    {t.longTermTrend}
                                                 </button>
                                             </div>
                                         </div>
@@ -2956,7 +3078,7 @@
                                         <div className="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-blue-100 p-1 rounded text-blue-600"><FileText size={16} /></div>
-                                                <h3 className="font-bold text-slate-800 text-sm">AI 临床分析报告</h3>
+                                                <h3 className="font-bold text-slate-800 text-sm">{t.aiClinicalAnalysisReport}</h3>
                                             </div>
                                             <span className="text-[10px] font-mono text-slate-400">{new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
@@ -2966,16 +3088,16 @@
 
                                                 {/* 主诉 */}
                                                 <div className="xl:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">{t.chiefComplaintSummary}</label>
                                                     
                                                     <div className="space-y-3">
                                                         {/* 系统识别的症状 */}
                                                         {data?.symptoms?.system_identified && data.symptoms.system_identified.length > 0 && (
                                                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                                                                 <div className="flex items-center gap-2 mb-2">
-                                                                    <span className="text-xs font-semibold text-blue-700">系统识别症状</span>
+                                                                    <span className="text-xs font-semibold text-blue-700">{t.systemIdentifiedSymptoms}</span>
                                                                     <span className="px-1.5 py-0.5 bg-blue-200 text-blue-700 text-[10px] rounded">
-                                                                        {data.symptoms.system_identified.length}项
+                                                                        {data.symptoms.system_identified.length} {t.items}
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-2">
@@ -2995,7 +3117,7 @@
                                                         {data?.symptoms?.patient_feedback && data.symptoms.patient_feedback.length > 0 && (
                                                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                                 <div className="flex items-center gap-2 mb-2">
-                                                                    <span className="text-xs font-semibold text-gray-700">患者自述</span>
+                                                                    <span className="text-xs font-semibold text-gray-700">{t.patientSelfReport}</span>
                                                                 </div>
                                                                 <div className="text-gray-700 text-sm">
                                                                     {data.symptoms.patient_feedback.join('、')}
@@ -3015,7 +3137,7 @@
                                                 {/* 左栏分析 */}
                                                 <div className="space-y-3">
                                                     <AITaskBlock
-                                                        title="症状识别 (Symptom Recognition)"
+                                                        title={t.symptomRecognition}
                                                         targetPath={dataPaths.likely_causes}
                                                         targetId={triageId}
                                                         targetKind="triage_result"
@@ -3562,7 +3684,7 @@
                                                             <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientSex}</span>
                                                         )}
                                                         {patientAge && (
-                                                            <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientAge}岁</span>
+                                                            <span className="px-1.5 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">{patientAge} {t.yearsOld}</span>
                                                         )}
                                                     </div>
                                                     {esiLevel !== null && esiLevel !== undefined && (
@@ -3574,23 +3696,23 @@
                                                 {/* 病史信息 */}
                                                 {(patient.meds && patient.meds.length > 0) || (patient.medical_history && (patient.medical_history.diagnoses_str || patient.medical_history.diagnoses)) || allergyList ? (
                                                     <div className="mt-2 pt-2 border-t border-slate-100">
-                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">病史</div>
+                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
                                                         <div className="text-xs text-slate-600 space-y-0.5">
                                                             {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) && (
                                                                 <div>
-                                                                    <span className="font-medium">疾病：</span>
+                                                                    <span className="font-medium">{t.diseases}</span>
                                                                     <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、') || '无'}</span>
                                                                 </div>
                                                             )}
                                                             {patient.meds && patient.meds.length > 0 && (
                                                                 <div>
-                                                                    <span className="font-medium">当前用药：</span>
+                                                                    <span className="font-medium">{t.currentMedications}</span>
                                                                     <span>{patient.meds.join('、')}</span>
                                                                 </div>
                                                             )}
                                                             {allergyList && (
                                                                 <div>
-                                                                    <span className="font-medium">过敏：</span>
+                                                                    <span className="font-medium">{t.allergies}</span>
                                                                     <span>{allergyList.join('、')}</span>
                                                                 </div>
                                                             )}
@@ -3610,7 +3732,7 @@
                                         <div className="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                                             <div className="flex items-center gap-2">
                                                 <div className="bg-blue-100 p-1 rounded text-blue-600"><FileText size={16} /></div>
-                                                <h3 className="font-bold text-slate-800 text-sm">AI 临床分析报告</h3>
+                                                <h3 className="font-bold text-slate-800 text-sm">{t.aiClinicalAnalysisReport}</h3>
                                             </div>
                                             <span className="text-[10px] font-mono text-slate-400">{new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
@@ -3620,16 +3742,16 @@
 
                                                 {/* 主诉 */}
                                                 <div className="xl:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">主诉摘要 (Chief Complaint)</label>
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">{t.chiefComplaintSummary}</label>
                                                     
                                                     <div className="space-y-3">
                                                         {/* 系统识别的症状 */}
                                                         {data?.symptoms?.system_identified && data.symptoms.system_identified.length > 0 && (
                                                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                                                                 <div className="flex items-center gap-2 mb-2">
-                                                                    <span className="text-xs font-semibold text-blue-700">系统识别症状</span>
+                                                                    <span className="text-xs font-semibold text-blue-700">{t.systemIdentifiedSymptoms}</span>
                                                                     <span className="px-1.5 py-0.5 bg-blue-200 text-blue-700 text-[10px] rounded">
-                                                                        {data.symptoms.system_identified.length}项
+                                                                        {data.symptoms.system_identified.length} {t.items}
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-2">
@@ -3649,7 +3771,7 @@
                                                         {data?.symptoms?.patient_feedback && data.symptoms.patient_feedback.length > 0 && (
                                                             <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                                 <div className="flex items-center gap-2 mb-2">
-                                                                    <span className="text-xs font-semibold text-gray-700">患者自述</span>
+                                                                    <span className="text-xs font-semibold text-gray-700">{t.patientSelfReport}</span>
                                                                 </div>
                                                                 <div className="text-gray-700 text-sm">
                                                                     {data.symptoms.patient_feedback.join('、')}
@@ -3669,7 +3791,7 @@
                                                 {/* 左栏分析 */}
                                                 <div className="space-y-3">
                                                     <AITaskBlock
-                                                        title="症状识别 (Symptom Recognition)"
+                                                        title={t.symptomRecognition}
                                                         targetPath={dataPaths.likely_causes}
                                                         targetId={triageId}
                                                         targetKind="triage_result"
