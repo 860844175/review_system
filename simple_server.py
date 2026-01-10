@@ -47,6 +47,18 @@ try:
     SERVICES_AVAILABLE = True
     print("✅ 服务模块加载成功")
     print(f"📍 审核平台URL: {APPROVAL_PLATFORM_BASE_URL}")
+    if "localhost:5003" in APPROVAL_PLATFORM_BASE_URL:
+        print("   ✅ 使用 Mock 审核平台")
+    elif "med.bjknrt.com" in APPROVAL_PLATFORM_BASE_URL:
+        print("   ⚠️  使用真实审核平台（生产环境）")
+    else:
+        print(f"   ℹ️  自定义审核平台地址")
+except ImportError as e:
+    print(f"⚠️ 服务模块加载失败: {e}")
+    SERVICES_AVAILABLE = False
+    get_approval_platform_client = None
+    get_system_client = None
+    LOCAL_BASE_URL = "http://localhost:5001"
 
 # ========== 语言检测函数 ==========
 def has_chinese_characters(text):
@@ -161,18 +173,6 @@ def detect_language_from_raw_data(bundle, ehr, signals):
     # 如果所有字段都没有中文字符，返回英文
     return 'en'
 # ========== 语言检测函数结束 ==========
-    if "localhost:5003" in APPROVAL_PLATFORM_BASE_URL:
-        print("   ✅ 使用 Mock 审核平台")
-    elif "med.bjknrt.com" in APPROVAL_PLATFORM_BASE_URL:
-        print("   ⚠️  使用真实审核平台（生产环境）")
-    else:
-        print(f"   ℹ️  自定义审核平台地址")
-except ImportError as e:
-    print(f"⚠️ 服务模块加载失败: {e}")
-    SERVICES_AVAILABLE = False
-    get_approval_platform_client = None
-    get_system_client = None
-    LOCAL_BASE_URL = "http://localhost:5001"
 
 # 任务分配模块导入
 try:
