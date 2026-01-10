@@ -2920,8 +2920,7 @@
             };
 
             // 获取患者姓名（可能在不同字段）
-            const currentLang = getLanguage();
-            const t = LANGUAGE_CONFIG[currentLang];
+            // 注意：currentLang 和 t 已经在函数开始处声明，这里直接使用
             const patientName = demographics['姓名'] || demographics['name'] || demographics['患者姓名'] || t.patient;
             const patientAge = demographics['年龄'] || demographics['age'];
             const patientSexRaw = demographics['性别'] || demographics['sex'];
