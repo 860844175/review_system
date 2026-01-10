@@ -374,6 +374,39 @@
                 systolicNormalRangeUpper: "Systolic Normal Range Upper Limit",
                 diastolicNormalRangeUpper: "Diastolic Normal Range Upper Limit",
                 
+                // 表格列标题
+                indicator: "Indicator",
+                triggerTime: "Trigger Time",
+                previous1hRange: "Previous 1h Range",
+                baselineValueColumn: "Baseline Value",
+                baselineText: "Baseline",
+                trend: "Trend",
+                
+                // 图表相关
+                spO2Label: "SpO2 (%)",
+                spO2ShortLabel: "SpO2 (%)",
+                averageSpO2Label: "Average SpO2 (%)",
+                stepsLabel: "Steps (steps/min)",
+                stepsPerMinute: "steps/min",
+                
+                // 性别
+                male: "Male",
+                female: "Female",
+                
+                // 图表数据标签
+                minValue: "Min Value",
+                fluctuationRange: "Fluctuation Range",
+                baselineValue: "Baseline Value",
+                normalRangeLower: "Normal Range Lower Limit",
+                systolicNormalRangeLower: "Systolic Normal Range Lower Limit",
+                diastolicNormalRangeLower: "Diastolic Normal Range Lower Limit",
+                lowestValue: "Lowest Value",
+                heartRateTooltip: "Heart Rate",
+                rangeTooltip: "Range",
+                belowNormalWarning: " ⚠️ Below Normal",
+                averageTooltip: "Average",
+                temperatureTooltip: "Temperature",
+                
                 // 批注相关
                 doctorAnnotation: "Doctor Annotation:",
                 inputAnnotation: "Enter annotation...",
@@ -1974,7 +2007,7 @@
                                         fill: false
                                     },
                                     ...(baselineHR ? [{
-                                        label: '基线',
+                                        label: t.baselineText,
                                         data: new Array(hrValues.length).fill(baselineHR),
                                         borderColor: 'rgb(148, 163, 184)',
                                         backgroundColor: 'transparent',
@@ -2167,7 +2200,7 @@
                 }
 
                 return cleanup;
-            }, [processEventData, baselineHR, baselineSpo2, baselineSBP, baselineDBP, viewMode]);
+            }, [processEventData, baselineHR, baselineSpo2, baselineSBP, baselineDBP, viewMode, currentLang, t]);
 
             return (
                 <>
