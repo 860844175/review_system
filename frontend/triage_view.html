@@ -2419,6 +2419,10 @@
 
         // --- 主应用组件 ---
         function TriageReviewApp() {
+            // 获取当前语言配置（必须在最前面）
+            const currentLang = getLanguage();
+            const t = LANGUAGE_CONFIG[currentLang];
+            
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
             const [data, setData] = useState(null);
