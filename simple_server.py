@@ -47,6 +47,120 @@ try:
     SERVICES_AVAILABLE = True
     print("✅ 服务模块加载成功")
     print(f"📍 审核平台URL: {APPROVAL_PLATFORM_BASE_URL}")
+
+# ========== 语言检测函数 ==========
+def has_chinese_characters(text):
+    """
+    检查文本中是否包含中文字符
+    返回 True（有中文）或 False（无中文）
+    """
+    if not text or not isinstance(text, str):
+        return False
+    
+    # 检查是否包含中文字符（Unicode范围：\u4e00-\u9fff）
+    for char in text:
+        if '\u4e00' <= char <= '\u9fff':
+            return True
+    return False
+
+
+def detect_language_from_raw_data(bundle, ehr, signals):
+    """
+    从原始拉取的数据中检测语言
+    只要发现任何中文字符，就返回 'zh'
+    否则返回 'en'
+    """
+    fields_to_check = []
+    
+    # 1. Bundle中的Triage数据
+    triage_data = (
+        bundle.get("bundle", {}).get("data", {}).get("triage", {}) or
+        bundle.get("bundle", {}).get("triage", {}) or
+        bundle.get("data", {}).get("triage", {}) or
+        bundle.get("triage", {})
+    )
+    
+    if isinstance(triage_data, dict):
+        triage_output = triage_data.get("output_json", triage_data)
+        if isinstance(triage_output, dict):
+            # rationale
+            if triage_output.get("rationale"):
+                fields_to_check.append(str(triage_output["rationale"]))
+            # likely_causes
+            likely_causes = triage_output.get("likely_causes", [])
+            if isinstance(likely_causes, list):
+                for cause in likely_causes:
+                    if isinstance(cause, str):
+                        fields_to_check.append(cause)
+    
+    # 2. Bundle中的Dialogue数据
+    bundle_data = bundle.get("bundle", {}).get("data", {}) or bundle.get("data", {})
+    # symptoms（患者自述）
+    symptoms = bundle_data.get("symptoms", [])
+    if isinstance(symptoms, list):
+        for symptom in symptoms:
+            presented_json = symptom.get("presented_json", {})
+            if isinstance(presented_json, dict) and presented_json.get("content"):
+                fields_to_check.append(str(presented_json["content"]))
+    
+    # questions（系统提问）
+    questions = bundle_data.get("questions", [])
+    if isinstance(questions, list):
+        for question_item in questions:
+            output_json = question_item.get("output_json", {})
+            if isinstance(output_json, dict):
+                questions_list = output_json.get("questions", [])
+                if isinstance(questions_list, list):
+                    for q in questions_list:
+                        if isinstance(q, dict) and q.get("question"):
+                            fields_to_check.append(str(q["question"]))
+    
+    # 3. Bundle中的Suggestions数据
+    suggestions = bundle_data.get("suggestions", {})
+    for suggestion_type in ["patient", "doctor"]:
+        suggestion_list = suggestions.get(suggestion_type, [])
+        if isinstance(suggestion_list, list):
+            for suggestion in suggestion_list:
+                output_json = suggestion.get("output_json", "")
+                if isinstance(output_json, str) and len(output_json) > 5:
+                    fields_to_check.append(output_json)
+    
+    # 4. Signals数据
+    if isinstance(signals, dict):
+        signals_data = signals.get("data", [])
+        if isinstance(signals_data, list) and len(signals_data) > 0:
+            first_signal = signals_data[0]
+            # summary_text
+            if first_signal.get("summary_text"):
+                fields_to_check.append(str(first_signal["summary_text"]))
+            # anomalies
+            anomalies = first_signal.get("anomalies", [])
+            if isinstance(anomalies, list):
+                for anomaly in anomalies:
+                    if isinstance(anomaly, dict):
+                        # 检查anomaly的所有字符串字段
+                        for key, value in anomaly.items():
+                            if isinstance(value, str) and len(value) > 2:
+                                fields_to_check.append(value)
+    
+    # 5. EHR数据（可选，因为可能包含很多英文医学术语）
+    # 但如果有中文病史描述，也应该检测
+    if isinstance(ehr, dict):
+        # 检查病史等关键字段
+        medical_history = ehr.get("medical_history", {})
+        if isinstance(medical_history, dict):
+            for key, value in medical_history.items():
+                if isinstance(value, str) and len(value) > 5:
+                    fields_to_check.append(value)
+    
+    # 检测：只要发现一个中文字符，就返回中文
+    for field_text in fields_to_check:
+        if has_chinese_characters(field_text):
+            return 'zh'
+    
+    # 如果所有字段都没有中文字符，返回英文
+    return 'en'
+# ========== 语言检测函数结束 ==========
     if "localhost:5003" in APPROVAL_PLATFORM_BASE_URL:
         print("   ✅ 使用 Mock 审核平台")
     elif "med.bjknrt.com" in APPROVAL_PLATFORM_BASE_URL:
@@ -1041,6 +1155,51 @@ def create_review_task_from_system():
         import time
         start_time = time.time()
         
+        # 语言检测（在生成URL之前）：拉取数据并检测语言
+        detected_lang = 'zh'  # 默认中文
+        if DIAGNOSIS_SYSTEM_AVAILABLE:
+            try:
+                print(f"[{datetime.utcnow().isoformat()}Z] 🌐 开始语言检测...")
+                base_url = os.getenv('DIAGNOSIS_SYSTEM_BASE_URL', '')
+                api_key = os.getenv('DIAGNOSIS_SYSTEM_API_KEY', '')
+                if base_url and api_key:
+                    client = LiveDiagnosisSystemClient(base_url=base_url, api_key=api_key)
+                    # 拉取数据用于语言检测
+                    bundle = client.get_scenario_bundle(scenario_id, include_reviews=True, include_signals=True)
+                    scenario = bundle.get('scenario', {})
+                    conv_start_ts_str = scenario.get('conv_start_ts')
+                    
+                    # 计算信号时间窗口
+                    signal_start_ts = None
+                    signal_end_ts = None
+                    if conv_start_ts_str:
+                        try:
+                            if conv_start_ts_str.endswith('Z'):
+                                conv_start_ts_str = conv_start_ts_str[:-1] + '+00:00'
+                            conv_start_dt = datetime.fromisoformat(conv_start_ts_str)
+                            signal_end_ts = conv_start_ts_str
+                            signal_start_dt = conv_start_dt - timedelta(days=30)
+                            signal_start_ts = signal_start_dt.isoformat()
+                        except Exception:
+                            pass
+                    
+                    ehr = client.get_user_ehr(user_id)
+                    signals_kwargs = {}
+                    if signal_start_ts:
+                        signals_kwargs['start'] = signal_start_ts
+                    if signal_end_ts:
+                        signals_kwargs['end'] = signal_end_ts
+                    signals = client.get_user_signals(user_id, **signals_kwargs)
+                    
+                    # 检测语言
+                    detected_lang = detect_language_from_raw_data(bundle, ehr, signals)
+                    print(f"[{datetime.utcnow().isoformat()}Z] ✅ 语言检测完成: {detected_lang}")
+                else:
+                    print(f"[{datetime.utcnow().isoformat()}Z] ⚠️ 无法进行语言检测（缺少API配置），使用默认中文")
+            except Exception as e:
+                print(f"[{datetime.utcnow().isoformat()}Z] ⚠️ 语言检测失败，使用默认中文: {e}")
+                detected_lang = 'zh'  # 检测失败，默认中文
+        
         # 任务分配（Step 1）：分配医生（需要在生成URL之前完成）
         doctor_id = None
         assignment_result = None
@@ -1082,17 +1241,27 @@ def create_review_task_from_system():
         else:
             print(f"[{datetime.utcnow().isoformat()}Z] ⚠️ 任务分配模块不可用，跳过医生分配")
         
-        # 生成审核页面URL，将 task_id、user_id、scenario_id 和 doctor_id 编码到URL中
+        # 生成审核页面URL，将 task_id、user_id、scenario_id、doctor_id 和 lang 编码到URL中
         from urllib.parse import urlencode
         params = {
             'task_id': task_id,
             'user_id': user_id,
-            'scenario_id': scenario_id
+            'scenario_id': scenario_id,
+            'lang': detected_lang  # 添加检测到的语言参数
         }
         # 如果分配了医生，添加到URL参数中
         if doctor_id:
             params['doctor_id'] = doctor_id
         review_page_url = f"{LOCAL_BASE_URL}/review/triage?{urlencode(params)}"
+        
+        # 同时生成两个版本的URL（可选，供审核平台选择）
+        params_zh = params.copy()
+        params_zh['lang'] = 'zh'
+        review_page_url_zh = f"{LOCAL_BASE_URL}/review/triage?{urlencode(params_zh)}"
+        
+        params_en = params.copy()
+        params_en['lang'] = 'en'
+        review_page_url_en = f"{LOCAL_BASE_URL}/review/triage?{urlencode(params_en)}"
         
         # 调用审核平台注册任务（Step 2）
         platform_synced = False
@@ -1126,7 +1295,10 @@ def create_review_task_from_system():
         result = {
             "success": True,
             "task_id": task_id,
-            "review_url": review_page_url,
+            "review_url": review_page_url,  # 推荐的URL（包含检测到的语言）
+            "review_url_zh": review_page_url_zh,  # 中文版本URL
+            "review_url_en": review_page_url_en,  # 英文版本URL
+            "detected_language": detected_lang,  # 检测到的语言（仅供参考）
             "platform_synced": platform_synced
         }
         
