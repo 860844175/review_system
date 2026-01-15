@@ -91,19 +91,20 @@ def build_view_model(scenario: dict, bundle: dict, ehr: dict, signals: dict) -> 
         # meds 可能是数组（旧格式）或对象（新格式，包含药物清单等）
         meds = ehr_data.get("meds", []) or []
         if isinstance(meds, dict):
-            # 新格式：提取药物清单
-            meds = meds.get("药物清单", [])
+            # 兼容中英文字段名
+            meds = meds.get("药物清单") or meds.get("medicationList", [])
         
         baseline_vitals = ehr_data.get("baseline_vitals", {}) or {}
         
-        # 提取medical_history（疾病信息）
+        # 提取medical_history（疾病信息）- 兼容中英文字段名
         medical_history_list = ehr_data.get("medical_history", [])
         diagnoses = []
         if medical_history_list and isinstance(medical_history_list, list):
             for item in medical_history_list:
                 if isinstance(item, dict):
-                    disease = item.get("疾病", "")
-                    duration = item.get("病程原文", "")
+                    # 兼容中英文字段名
+                    disease = item.get("疾病") or item.get("disease", "")
+                    duration = item.get("病程原文") or item.get("durationOriginal", "")
                     if disease:
                         if duration:
                             diagnoses.append(f"{disease}（{duration}）")

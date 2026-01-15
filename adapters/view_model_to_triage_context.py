@@ -1039,15 +1039,16 @@ def _extract_medical_history(ehr: Dict[str, Any], meds: list, language: str = 'z
     # 提取 ehr 数据（兼容新旧格式）
     ehr_data = ehr.get("ehr", ehr) if isinstance(ehr, dict) else {}
     
-    # 提取既往疾病
+    # 提取既往疾病 - 兼容中英文字段名
     medical_history_list = ehr_data.get("medical_history", [])
     diagnoses = []
     diagnoses_str = "无"
     if medical_history_list and isinstance(medical_history_list, list):
         for item in medical_history_list:
             if isinstance(item, dict):
-                disease = item.get("疾病", "")
-                duration = item.get("病程原文", "")
+                # 兼容中英文字段名
+                disease = item.get("疾病") or item.get("disease", "")
+                duration = item.get("病程原文") or item.get("durationOriginal", "")
                 if disease:
                     if duration:
                         diagnoses.append(f"{disease}（{duration}）")
@@ -1056,16 +1057,16 @@ def _extract_medical_history(ehr: Dict[str, Any], meds: list, language: str = 'z
         if diagnoses:
             diagnoses_str = "、".join(diagnoses)
     
-    # 提取过敏史
+    # 提取过敏史 - 兼容中英文字段名
     allergy_history = ehr_data.get("allergy_history", {})
     allergies = []
     allergies_str = "无过敏史" if language == 'zh' else "No known allergies"
     if isinstance(allergy_history, dict):
-        # 提取所有类型的过敏
-        drug_allergies = allergy_history.get("药物", [])
-        food_allergies = allergy_history.get("食物", [])
-        env_allergies = allergy_history.get("环境", [])
-        other_allergies = allergy_history.get("其他", [])
+        # 提取所有类型的过敏 - 兼容中英文字段名
+        drug_allergies = allergy_history.get("药物") or allergy_history.get("drugs", [])
+        food_allergies = allergy_history.get("食物") or allergy_history.get("food", [])
+        env_allergies = allergy_history.get("环境") or allergy_history.get("environment", [])
+        other_allergies = allergy_history.get("其他") or allergy_history.get("other", [])
         
         all_allergies = []
         if drug_allergies and isinstance(drug_allergies, list):
@@ -1081,15 +1082,16 @@ def _extract_medical_history(ehr: Dict[str, Any], meds: list, language: str = 'z
             allergies = all_allergies
             allergies_str = "、".join(all_allergies)
     
-    # 提取家族史
+    # 提取家族史 - 兼容中英文字段名
     family_history = ehr_data.get("family_history", {})
     family_history_str = "无特殊家族史" if language == 'zh' else "No significant family history"
     if isinstance(family_history, dict):
         family_items = []
-        mother_history = family_history.get("母亲病史", [])
-        father_history = family_history.get("父亲病史", [])
-        sibling_history = family_history.get("兄弟姐妹病史", [])
-        child_history = family_history.get("子女病史", [])
+        # 兼容中英文字段名
+        mother_history = family_history.get("母亲病史") or family_history.get("motherHistory", [])
+        father_history = family_history.get("父亲病史") or family_history.get("fatherHistory", [])
+        sibling_history = family_history.get("兄弟姐妹病史") or family_history.get("siblingsHistory", [])
+        child_history = family_history.get("子女病史") or family_history.get("childrenHistory", [])
         
         if mother_history and isinstance(mother_history, list):
             family_items.append(f"母亲：{', '.join([str(h) for h in mother_history if h])}")
@@ -1103,11 +1105,11 @@ def _extract_medical_history(ehr: Dict[str, Any], meds: list, language: str = 'z
         if family_items:
             family_history_str = "；".join(family_items)
     
-    # 提取生活方式（从 ehr 的 lifestyle）
+    # 提取生活方式（从 ehr 的 lifestyle）- 兼容中英文字段名
     lifestyle = ehr_data.get("lifestyle", {})
     social_history = {
-        "tobacco": lifestyle.get("吸烟情况", "未知") if isinstance(lifestyle, dict) else "未知",
-        "alcohol": lifestyle.get("饮酒情况", "未知") if isinstance(lifestyle, dict) else "未知"
+        "tobacco": (lifestyle.get("吸烟情况") or lifestyle.get("smoking", "未知")) if isinstance(lifestyle, dict) else "未知",
+        "alcohol": (lifestyle.get("饮酒情况") or lifestyle.get("alcoholConsumption", "未知")) if isinstance(lifestyle, dict) else "未知"
     }
     
     return {
