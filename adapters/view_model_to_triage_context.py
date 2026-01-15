@@ -6,7 +6,7 @@ View Model 到 Triage Context 适配器
 
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 import logging
 
 logger = logging.getLogger(__name__)
