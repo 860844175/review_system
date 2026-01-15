@@ -465,10 +465,22 @@ def _extract_dialogue_messages(bundle: Dict[str, Any], language: str = 'zh') -> 
                 # 患者的反馈（从 user_feedback 提取）
                 user_feedback = symptom.get("user_feedback", [])
                 if user_feedback and isinstance(user_feedback, list):
-                    patient_content = ", ".join([str(f) for f in user_feedback if f])
+                    # 提取文本内容：如果是字典，提取 text 或 symptom_name；如果是字符串，直接使用
+                    feedback_texts = []
+                    for f in user_feedback:
+                        if not f:
+                            continue
+                        if isinstance(f, dict):
+                            # 优先使用 text，如果没有则使用 symptom_name
+                            text = f.get("text") or f.get("symptom_name", "")
+                            if text:
+                                feedback_texts.append(str(text))
+                        elif isinstance(f, str):
+                            feedback_texts.append(f)
+                    
+                    patient_content = ", ".join(feedback_texts)
                     if patient_content:
                         created_at = symptom.get("created_at", "")
-                        # 对于数组类型的user_feedback，使用索引0
                         messages.append({
                             "type": "patient",
                             "content": patient_content,
