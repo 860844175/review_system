@@ -1055,7 +1055,7 @@ def diagnosis_system_triage_view_by_task():
         view_model = build_view_model(scenario, bundle, ehr, signals)
         
         # 提取对话历史（从bundle中）
-        from adapters.view_model_to_triage_context import _extract_dialogue_messages, _extract_symptoms_data
+        from adapters.view_model_to_triage_context import _extract_dialogue_messages, _extract_symptoms_data, _extract_trigger_context
         dialogue_messages = _extract_dialogue_messages(bundle, language='zh')
         
         # 将对话历史添加到view_model中
@@ -1064,6 +1064,10 @@ def diagnosis_system_triage_view_by_task():
         # 提取症状数据（系统识别 + 患者自述）
         symptoms_data = _extract_symptoms_data(bundle)
         view_model["symptoms"] = symptoms_data
+        
+        # 提取触发上下文
+        trigger_context = _extract_trigger_context(bundle, view_model["signals"])
+        view_model["trigger_context"] = trigger_context
         
         # 提取 raw_signals（1小时内的原始时间序列数据）
         bundle_data = bundle.get("bundle", {}).get("data", {}) or bundle.get("data", {})
