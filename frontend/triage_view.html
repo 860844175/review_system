@@ -147,6 +147,7 @@
 
                 // 患者信息相关
                 patient: "患者",
+                patientIcon: "患",
                 yearsOld: "岁",
                 medicalHistory: "病史",
                 diseases: "疾病：",
@@ -327,6 +328,7 @@
 
                 // 患者信息相关
                 patient: "Patient",
+                patientIcon: "P",
                 yearsOld: "y/o",
                 medicalHistory: "Medical History",
                 diseases: "Diseases:",
@@ -3633,7 +3635,7 @@
                                                                     ? 'bg-white text-blue-600 border-blue-100'
                                                                     : 'bg-slate-800 text-white border-slate-800'
                                                                     }`}>
-                                                                    {messageRole === 'ai' ? 'AI' : '患'}
+                                                                    {messageRole === 'ai' ? 'AI' : t.patientIcon}
                                                                 </div>
                                                                 <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed relative group/message ${messageRole === 'ai'
                                                                     ? 'bg-slate-50 text-slate-700 border border-slate-100 rounded-bl-none'
@@ -4309,7 +4311,7 @@
                                                                     ? 'bg-white text-blue-600 border-blue-100'
                                                                     : 'bg-slate-800 text-white border-slate-800'
                                                                     }`}>
-                                                                    {messageRole === 'ai' ? 'AI' : '患'}
+                                                                    {messageRole === 'ai' ? 'AI' : t.patientIcon}
                                                                 </div>
                                                                 <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed relative group/message ${messageRole === 'ai'
                                                                     ? 'bg-slate-50 text-slate-700 border border-slate-100 rounded-bl-none'
@@ -4321,8 +4323,8 @@
                                                                         <button
                                                                             onClick={() => setExpandedReason(prev => prev === idx ? null : idx)}
                                                                             className={`absolute -top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-colors ${expandedReason === idx
-                                                                                    ? 'bg-amber-600 text-white'
-                                                                                    : 'bg-amber-400 text-white hover:bg-amber-500'
+                                                                                ? 'bg-amber-600 text-white'
+                                                                                : 'bg-amber-400 text-white hover:bg-amber-500'
                                                                                 }`}
                                                                             title={expandedReason === idx ? "Hide AI Reasoning" : "View AI Reasoning"}
                                                                         >
