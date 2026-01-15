@@ -536,6 +536,22 @@
         const TrendingUp = (props) => <IconWrapper {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></IconWrapper>;
         const Maximize2 = (props) => <IconWrapper {...props}><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" x2="14" y1="3" y2="10" /><line x1="3" x2="10" y1="21" y2="14" /></IconWrapper>;
 
+        // --- 消息文本格式化函数（将编号列表加粗） ---
+        const formatMessageText = (text) => {
+            if (!text) return null;
+            const lines = text.split('\n');
+            return lines.map((line, index) => {
+                // 检测以数字+点开头的行（如 "1. Headache"）
+                const isNumberedItem = /^\d+\.\s/.test(line.trim());
+                return (
+                    <React.Fragment key={index}>
+                        {isNumberedItem ? <strong>{line}</strong> : line}
+                        {index < lines.length - 1 && '\n'}
+                    </React.Fragment>
+                );
+            });
+        };
+
         // --- 顶部导航栏 ---
         const Header = ({ taskId, viewMode, onViewModeChange, doctorInfo }) => {
             const currentLang = getLanguage();
@@ -3641,7 +3657,7 @@
                                                                     ? 'bg-slate-50 text-slate-700 border border-slate-100 rounded-bl-none'
                                                                     : 'bg-blue-600 text-white shadow-md shadow-blue-600/10 rounded-br-none'
                                                                     }`}>
-                                                                    {messageText}
+                                                                    {formatMessageText(messageText)}
                                                                     {/* AI Reasoning 图标 - 仅在AI消息且有reason时显示 */}
                                                                     {messageRole === 'ai' && msg.reason && (
                                                                         <button
@@ -4317,7 +4333,7 @@
                                                                     ? 'bg-slate-50 text-slate-700 border border-slate-100 rounded-bl-none'
                                                                     : 'bg-blue-600 text-white shadow-md shadow-blue-600/10 rounded-br-none'
                                                                     }`}>
-                                                                    {messageText}
+                                                                    {formatMessageText(messageText)}
                                                                     {/* AI Reasoning 图标 - 仅在AI消息且有reason时显示 */}
                                                                     {messageRole === 'ai' && msg.reason && (
                                                                         <button
