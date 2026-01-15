@@ -488,6 +488,8 @@ def _extract_dialogue_messages(bundle: Dict[str, Any], language: str = 'zh') -> 
                 # AI的问题（从 output_json.questions 提取）
                 output_json = question.get("output_json", {})
                 if isinstance(output_json, dict):
+                    # 提取 reason（AI 决策理由）
+                    reason = output_json.get("reason", "")
                     q_list = output_json.get("questions", [])
                     if q_list:
                         for q_item_index, q_item in enumerate(q_list):
@@ -502,7 +504,8 @@ def _extract_dialogue_messages(bundle: Dict[str, Any], language: str = 'zh') -> 
                                         "question_id": question_id,
                                         "question_index": question_index,
                                         "turn_index": turn_index,
-                                        "q_item_index": q_item_index
+                                        "q_item_index": q_item_index,
+                                        "reason": reason  # AI 决策理由
                                     })
                 
                 # 患者的回答（从 user_feedback 提取）

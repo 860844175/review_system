@@ -590,8 +590,8 @@
                                 <button
                                     onClick={() => switchLanguage('zh')}
                                     className={`px-3 py-1 text-xs font-medium rounded transition-all ${currentLang === 'zh'
-                                            ? 'bg-white shadow-sm text-slate-700 border border-slate-200'
-                                            : 'text-slate-500 hover:text-slate-700 border border-transparent'
+                                        ? 'bg-white shadow-sm text-slate-700 border border-slate-200'
+                                        : 'text-slate-500 hover:text-slate-700 border border-transparent'
                                         }`}
                                 >
                                     中文
@@ -599,8 +599,8 @@
                                 <button
                                     onClick={() => switchLanguage('en')}
                                     className={`px-3 py-1 text-xs font-medium rounded transition-all ${currentLang === 'en'
-                                            ? 'bg-white shadow-sm text-slate-700 border border-slate-200'
-                                            : 'text-slate-500 hover:text-slate-700 border border-transparent'
+                                        ? 'bg-white shadow-sm text-slate-700 border border-slate-200'
+                                        : 'text-slate-500 hover:text-slate-700 border border-transparent'
                                         }`}
                                 >
                                     English
@@ -2302,8 +2302,8 @@
                                             {section.title && (
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className={`w-1 h-4 rounded ${section.type === 'observation' ? 'bg-blue-500' :
-                                                            section.type === 'inference' ? 'bg-indigo-500' :
-                                                                'bg-purple-500'
+                                                        section.type === 'inference' ? 'bg-indigo-500' :
+                                                            'bg-purple-500'
                                                         }`}></div>
                                                     <h4 className="text-xs font-semibold text-slate-700">
                                                         {section.title}
@@ -2465,6 +2465,7 @@
             const [submitMessage, setSubmitMessage] = useState(null);
             const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // 默认折叠
             const [dialogueMessages, setDialogueMessages] = useState([]); // 对话历史
+            const [expandedReason, setExpandedReason] = useState(null); // 展开的AI reasoning索引
             const [viewMode, setViewMode] = useState('shorthand'); // 视图模式：'shorthand' 或 'full'
             const [signalTab, setSignalTab] = useState('event'); // 信号可视化 Tab：'event'（事件详情）或 'trend'（长期趋势）
 
@@ -2627,7 +2628,8 @@
                             target_path: msg.target_path || '',  // 保留路径信息
                             turn_index: msg.turn_index,  // 保留turn_index
                             question_id: msg.question_id || msg.symptom_id || '',  // 保留ID
-                            question_index: msg.question_index || msg.symptom_index
+                            question_index: msg.question_index || msg.symptom_index,
+                            reason: msg.reason || ''  // AI决策理由
                         }));
 
                         setDialogueMessages(formattedMessages);
@@ -3087,8 +3089,8 @@
                                             <div className="flex">
                                                 <button
                                                     className={`px-4 py-2 text-xs font-semibold transition-colors ${signalTab === 'event'
-                                                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                                                            : 'text-slate-500 hover:text-slate-700'
+                                                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                                                        : 'text-slate-500 hover:text-slate-700'
                                                         }`}
                                                     onClick={() => setSignalTab('event')}
                                                 >
@@ -3096,8 +3098,8 @@
                                                 </button>
                                                 <button
                                                     className={`px-4 py-2 text-xs font-semibold transition-colors ${signalTab === 'trend'
-                                                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                                                            : 'text-slate-500 hover:text-slate-700'
+                                                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                                                        : 'text-slate-500 hover:text-slate-700'
                                                         }`}
                                                     onClick={() => setSignalTab('trend')}
                                                 >
@@ -3638,11 +3640,24 @@
                                                                     : 'bg-blue-600 text-white shadow-md shadow-blue-600/10 rounded-br-none'
                                                                     }`}>
                                                                     {messageText}
+                                                                    {/* AI Reasoning 图标 - 仅在AI消息且有reason时显示 */}
+                                                                    {messageRole === 'ai' && msg.reason && (
+                                                                        <button
+                                                                            onClick={() => setExpandedReason(prev => prev === idx ? null : idx)}
+                                                                            className={`absolute -top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-colors ${expandedReason === idx
+                                                                                ? 'bg-amber-600 text-white'
+                                                                                : 'bg-amber-400 text-white hover:bg-amber-500'
+                                                                                }`}
+                                                                            title={expandedReason === idx ? "Hide AI Reasoning" : "View AI Reasoning"}
+                                                                        >
+                                                                            💡
+                                                                        </button>
+                                                                    )}
                                                                     {/* 批注按钮 - 鼠标悬停时显示 */}
                                                                     {targetPath && !messageAnnotation && !isEditing && (
                                                                         <button
                                                                             onClick={handleStartEdit}
-                                                                            className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/message:opacity-100 transition-opacity shadow-md hover:bg-blue-700"
+                                                                            className={`absolute -top-1 ${msg.reason ? '-right-7' : '-right-1'} w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/message:opacity-100 transition-opacity shadow-md hover:bg-blue-700`}
                                                                             title={t.addAnnotationTitle}
                                                                         >
                                                                             <MessageSquare size={12} />
@@ -3650,6 +3665,15 @@
                                                                     )}
                                                                 </div>
                                                             </div>
+                                                            {/* AI Reasoning 展开区域 */}
+                                                            {messageRole === 'ai' && msg.reason && expandedReason === idx && (
+                                                                <div className="mt-2 ml-9 max-w-[85%] p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs animate-fadeIn">
+                                                                    <div className="text-[10px] font-semibold text-amber-700 mb-1.5 flex items-center gap-1">
+                                                                        <span>💡</span> AI Reasoning
+                                                                    </div>
+                                                                    <div className="text-xs text-amber-900 leading-relaxed">{msg.reason}</div>
+                                                                </div>
+                                                            )}
                                                             {/* 批注编辑/显示区域 - 使用与AnnotationInput相同的格式 */}
                                                             {(isEditing || messageAnnotation) && (
                                                                 <div className={`mt-2 max-w-[92%] ${messageRole === 'ai' ? 'ml-9' : 'mr-9'}`}>
@@ -4292,11 +4316,24 @@
                                                                     : 'bg-blue-600 text-white shadow-md shadow-blue-600/10 rounded-br-none'
                                                                     }`}>
                                                                     {messageText}
+                                                                    {/* AI Reasoning 图标 - 仅在AI消息且有reason时显示 */}
+                                                                    {messageRole === 'ai' && msg.reason && (
+                                                                        <button
+                                                                            onClick={() => setExpandedReason(prev => prev === idx ? null : idx)}
+                                                                            className={`absolute -top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-colors ${expandedReason === idx
+                                                                                    ? 'bg-amber-600 text-white'
+                                                                                    : 'bg-amber-400 text-white hover:bg-amber-500'
+                                                                                }`}
+                                                                            title={expandedReason === idx ? "Hide AI Reasoning" : "View AI Reasoning"}
+                                                                        >
+                                                                            💡
+                                                                        </button>
+                                                                    )}
                                                                     {/* 批注按钮 - 鼠标悬停时显示 */}
                                                                     {targetPath && !messageAnnotation && !isEditing && (
                                                                         <button
                                                                             onClick={handleStartEdit}
-                                                                            className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/message:opacity-100 transition-opacity shadow-md hover:bg-blue-700"
+                                                                            className={`absolute -top-1 ${msg.reason ? '-right-7' : '-right-1'} w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover/message:opacity-100 transition-opacity shadow-md hover:bg-blue-700`}
                                                                             title={t.addAnnotationTitle}
                                                                         >
                                                                             <MessageSquare size={12} />
@@ -4304,6 +4341,15 @@
                                                                     )}
                                                                 </div>
                                                             </div>
+                                                            {/* AI Reasoning 展开区域 */}
+                                                            {messageRole === 'ai' && msg.reason && expandedReason === idx && (
+                                                                <div className="mt-2 ml-9 max-w-[85%] p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs animate-fadeIn">
+                                                                    <div className="text-[10px] font-semibold text-amber-700 mb-1.5 flex items-center gap-1">
+                                                                        <span>💡</span> AI Reasoning
+                                                                    </div>
+                                                                    <div className="text-xs text-amber-900 leading-relaxed">{msg.reason}</div>
+                                                                </div>
+                                                            )}
                                                             {/* 批注编辑/显示区域 - 使用与AnnotationInput相同的格式 */}
                                                             {(isEditing || messageAnnotation) && (
                                                                 <div className={`mt-2 max-w-[92%] ${messageRole === 'ai' ? 'ml-9' : 'mr-9'}`}>
