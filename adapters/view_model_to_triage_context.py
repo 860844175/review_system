@@ -588,15 +588,29 @@ def _extract_symptoms_data(bundle: Dict[str, Any]) -> Dict[str, Any]:
     if symptoms and isinstance(symptoms, list):
         for symptom in symptoms:
             if isinstance(symptom, dict):
-                # 提取系统识别的症状（output_json）
-                output_json = symptom.get("output_json", [])
-                if output_json and isinstance(output_json, list):
+                # 提取系统识别的症状（output_json.symptoms）
+                output_json = symptom.get("output_json", {})
+                if isinstance(output_json, dict):
+                    # 新的数据格式：output_json 是对象，symptoms 在其中
+                    symptoms_list = output_json.get("symptoms", [])
+                    if symptoms_list and isinstance(symptoms_list, list):
+                        system_identified.extend([str(s) for s in symptoms_list if s])
+                elif isinstance(output_json, list):
+                    # 兼容旧的数据格式：output_json 直接是列表
                     system_identified.extend([str(s) for s in output_json if s])
                 
                 # 提取患者自述（user_feedback）
                 user_feedback = symptom.get("user_feedback", [])
                 if user_feedback and isinstance(user_feedback, list):
-                    patient_feedback.extend([str(f) for f in user_feedback if f])
+                    for fb in user_feedback:
+                        if isinstance(fb, dict):
+                            # 新格式：user_feedback 是对象列表
+                            text = fb.get("text") or fb.get("symptom_name", "")
+                            if text:
+                                patient_feedback.append(str(text))
+                        elif fb:
+                            # 旧格式：直接是字符串
+                            patient_feedback.append(str(fb))
     
     return {
         "system_identified": system_identified,
