@@ -98,8 +98,12 @@ def convert_view_model_to_triage_context(
         signals_timeseries_data = _extract_signals_timeseries(signals_info)
         anomaly_periods = _extract_anomaly_periods(signals_info)
         
+        # 提取触发上下文
+        trigger_context = _extract_trigger_context(bundle, signals_info)
+
         # 构建 context
         context = {
+            "trigger_context": trigger_context,
             "patient_id": user_id,
             "patient_info": patient_info,
             "vital_signs": vital_signs,
@@ -616,6 +620,69 @@ def _extract_symptoms_data(bundle: Dict[str, Any]) -> Dict[str, Any]:
         "system_identified": system_identified,
         "patient_feedback": patient_feedback
     }
+
+
+def _extract_trigger_context(bundle: Dict[str, Any], signals_info: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    提取触发上下文信息（触发类型、原因、患者反馈、AI推理详情）
+    """
+    context = {
+        "trigger_type": "unknown",
+        "trigger_reason": [],
+        "patient_feedback": "",
+        "ai_exclusions": [],
+        "ai_risks": []
+    }
+    
+    if not bundle:
+        return context
+        
+    # 提取 trigger_type
+    # bundle 可能直接包含 scenario，或者在 bundle.scenario
+    scenario = bundle.get("scenario", {})
+    if not scenario:
+        scenario = bundle.get("bundle", {}).get("scenario", {})
+        
+    context["trigger_type"] = scenario.get("trigger_type", "unknown")
+    
+    # 提取症状和推理信息
+    bundle_data = bundle.get("bundle", {}).get("data", {}) or bundle.get("data", {})
+    symptoms = bundle_data.get("symptoms", [])
+    
+    if symptoms and isinstance(symptoms, list) and len(symptoms) > 0:
+        first_symptom = symptoms[0]
+        if isinstance(first_symptom, dict):
+            output_json = first_symptom.get("output_json", {})
+            
+            # 1. 提取 Trigger Reason (优先使用 anchors.signals)
+            reasoning = output_json.get("reasoning", {}) if isinstance(output_json, dict) else {}
+            anchors = reasoning.get("anchors", {})
+            if "signals" in anchors and isinstance(anchors["signals"], list):
+                context["trigger_reason"] = anchors["signals"]
+            
+            # 如果没有 anchors.signals，尝试使用 signals_info 中的 anomalies
+            if not context["trigger_reason"]:
+                context["trigger_reason"] = _extract_anomaly_tags(signals_info)
+                
+            # 2. 提取 AI Exclusions
+            context["ai_exclusions"] = reasoning.get("exclusions", [])
+            
+            # 3. 提取 AI Risks
+            context["ai_risks"] = anchors.get("risks", [])
+            
+            # 4. 提取 Patient Feedback
+            user_feedback = first_symptom.get("user_feedback", [])
+            feedback_texts = []
+            if isinstance(user_feedback, list):
+                for fb in user_feedback:
+                    if isinstance(fb, dict):
+                        text = fb.get("text") or fb.get("symptom_name")
+                        if text: feedback_texts.append(str(text))
+                    elif isinstance(fb, str):
+                        feedback_texts.append(fb)
+            context["patient_feedback"] = "、".join(feedback_texts) if feedback_texts else ""
+            
+    return context
 
 
 def _extract_suggestions_by_category(suggestions_list: List[Dict[str, Any]]) -> Dict[str, List[str]]:
