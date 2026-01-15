@@ -141,13 +141,16 @@
                 noDialogue: "暂无对话记录",
                 systemIdentifiedSymptoms: "系统预估症状",
                 triggerSource: "触发来源",
-                modelInquiry: "模型主动触发",
+                anomalyInfo: "异常原因",
+                triggerMethod: "触发方式",
+                modelInquiry: "模型主动询问",
                 patientInquiry: "患者主动咨询",
-                triggerReason: "触发异常信号",
+                triggerReason: "触发原因",
                 patientFeedback: "患者反馈",
                 aiReasoningDetails: "AI 推理详情",
-                excludedSymptoms: "已排除症状",
+                excludedSymptoms: "排除症状",
                 riskFactors: "风险因素",
+                exclusionRef: "参考",
                 patientRecommendations: "建议病人 (Patient Recommendations)",
                 doctorRecommendations: "建议医生 (Doctor Recommendations)",
                 recommendedAction: "建议措施:",
@@ -330,13 +333,16 @@
                 noDialogue: "No dialogue records",
                 systemIdentifiedSymptoms: "Estimated Symptoms",
                 triggerSource: "Trigger Source",
-                modelInquiry: "Model Initiated",
-                patientInquiry: "Patient Initiated",
+                anomalyInfo: "Anomaly Info",
+                triggerMethod: "Trigger Method",
+                modelInquiry: "Model Inquiry",
+                patientInquiry: "Patient Inquiry",
                 triggerReason: "Trigger Reason",
                 patientFeedback: "Patient Feedback",
                 aiReasoningDetails: "AI Reasoning Details",
                 excludedSymptoms: "Excluded Symptoms",
                 riskFactors: "Risk Factors",
+                exclusionRef: "Reference",
                 patientRecommendations: "Patient Recommendations",
                 doctorRecommendations: "Doctor Recommendations",
                 recommendedAction: "Recommended Action:",
@@ -563,25 +569,32 @@
             const isModel = context.trigger_type === 'model_inquiry';
 
             return (
-                <div className={`rounded-xl border ${isModel ? 'bg-blue-50/50 border-blue-100' : 'bg-purple-50/50 border-purple-100'} p-3 mb-4`}>
+                <div className="rounded-xl border bg-red-50/60 border-red-200 p-3 mb-4">
                     <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${isModel ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-                            {isModel ? <Activity size={18} /> : <User size={18} />}
+                        <div className="p-2 rounded-lg bg-red-100 text-red-600">
+                            <AlertTriangle size={18} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className={`text-sm font-bold ${isModel ? 'text-blue-800' : 'text-purple-800'}`}>
+                            {/* 标题：异常原因 */}
+                            <h3 className="text-sm font-bold text-red-800 mb-2">
+                                {t.anomalyInfo}
+                            </h3>
+
+                            {/* 触发方式 */}
+                            <div className="mb-2">
+                                <span className="text-xs text-slate-500">{t.triggerMethod}:</span>
+                                <span className="ml-1.5 text-sm font-medium text-slate-700">
                                     {isModel ? t.modelInquiry : t.patientInquiry}
-                                </h3>
+                                </span>
                             </div>
 
-                            {/* Trigger Reason (Signals) */}
-                            {isModel && context.trigger_reason && context.trigger_reason.length > 0 && (
+                            {/* 触发原因 (Signals) */}
+                            {context.trigger_reason && context.trigger_reason.length > 0 && (
                                 <div className="mb-2">
-                                    <div className="text-xs text-slate-500 mb-0.5">{t.triggerReason}:</div>
+                                    <div className="text-xs text-slate-500 mb-1">{t.triggerReason}:</div>
                                     <div className="flex flex-wrap gap-1.5">
                                         {context.trigger_reason.map((reason, idx) => (
-                                            <span key={idx} className="px-2 py-0.5 bg-white border border-blue-200 text-blue-700 text-xs rounded shadow-sm">
+                                            <span key={idx} className="px-2 py-0.5 bg-white border border-red-200 text-red-700 text-xs rounded shadow-sm">
                                                 {reason}
                                             </span>
                                         ))}
@@ -589,7 +602,7 @@
                                 </div>
                             )}
 
-                            {/* Patient Feedback */}
+                            {/* 患者反馈 */}
                             {context.patient_feedback && (
                                 <div className="mb-1">
                                     <div className="text-xs text-slate-500 mb-0.5">{t.patientFeedback}:</div>
@@ -599,46 +612,52 @@
                                 </div>
                             )}
 
-                            {/* Full Mode Extras */}
-                            {fullMode && isModel && (
-                                <div className="mt-3 pt-3 border-t border-slate-200/60">
+                            {/* Full Mode: AI 推理详情 */}
+                            {fullMode && (
+                                <div className="mt-3 pt-3 border-t border-red-200/60">
                                     <h4 className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
                                         <Bot size={14} /> {t.aiReasoningDetails}
                                     </h4>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {/* Exclusions */}
+                                        {/* Exclusions - 显示 ref */}
                                         {context.ai_exclusions && context.ai_exclusions.length > 0 && (
                                             <div className="bg-slate-50 rounded p-2 border border-slate-100">
                                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{t.excludedSymptoms}</div>
-                                                <ul className="space-y-1">
+                                                <ul className="space-y-2">
                                                     {context.ai_exclusions.map((item, idx) => (
-                                                        <li key={idx} className="text-xs text-slate-600 flex items-start gap-1.5">
-                                                            <XCircle size={12} className="text-slate-400 mt-0.5 shrink-0" />
-                                                            <span>
-                                                                <span className="font-medium text-slate-700">{item.symptom}</span>
-                                                                {item.reason_code && (
-                                                                    <>
-                                                                        <span className="text-slate-400 mx-1">-</span>
-                                                                        <span className="text-slate-500 italic">{item.reason_code}</span>
-                                                                    </>
-                                                                )}
-                                                            </span>
+                                                        <li key={idx} className="text-xs text-slate-600">
+                                                            <div className="flex items-start gap-1.5">
+                                                                <XCircle size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                                                                <div className="flex flex-col">
+                                                                    <span>
+                                                                        <span className="font-medium text-slate-700">{item.symptom}</span>
+                                                                        {item.reason_code && (
+                                                                            <span className="text-slate-400 ml-1">- {item.reason_code}</span>
+                                                                        )}
+                                                                    </span>
+                                                                    {item.ref && (
+                                                                        <span className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                                                                            {t.exclusionRef}: {item.ref}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </li>
                                                     ))}
                                                 </ul>
                                             </div>
                                         )}
 
-                                        {/* Risks */}
+                                        {/* Risks - 完整显示 */}
                                         {context.ai_risks && context.ai_risks.length > 0 && (
                                             <div className="bg-rose-50 rounded p-2 border border-rose-100">
                                                 <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1.5">{t.riskFactors}</div>
-                                                <ul className="space-y-1">
+                                                <ul className="space-y-1.5">
                                                     {context.ai_risks.map((risk, idx) => (
                                                         <li key={idx} className="text-xs text-rose-700 flex items-start gap-1.5">
                                                             <AlertTriangle size={12} className="text-rose-400 mt-0.5 shrink-0" />
-                                                            <span>{risk.substring(0, 100)}...</span>
+                                                            <span className="break-words leading-relaxed">{risk}</span>
                                                         </li>
                                                     ))}
                                                 </ul>
