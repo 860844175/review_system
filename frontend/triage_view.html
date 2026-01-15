@@ -536,16 +536,20 @@
         const TrendingUp = (props) => <IconWrapper {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></IconWrapper>;
         const Maximize2 = (props) => <IconWrapper {...props}><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" x2="14" y1="3" y2="10" /><line x1="3" x2="10" y1="21" y2="14" /></IconWrapper>;
 
-        // --- 消息文本格式化函数（将编号列表加粗） ---
+        // --- 消息文本格式化函数（将编号列表和问句加粗） ---
         const formatMessageText = (text) => {
             if (!text) return null;
             const lines = text.split('\n');
             return lines.map((line, index) => {
+                const trimmedLine = line.trim();
                 // 检测以数字+点开头的行（如 "1. Headache"）
-                const isNumberedItem = /^\d+\.\s/.test(line.trim());
+                const isNumberedItem = /^\d+\.\s/.test(trimmedLine);
+                // 检测症状询问问句
+                const isSymptomQuestion = trimmedLine.toLowerCase().includes('do you currently have any of the following');
+                const shouldBold = isNumberedItem || isSymptomQuestion;
                 return (
                     <React.Fragment key={index}>
-                        {isNumberedItem ? <strong>{line}</strong> : line}
+                        {shouldBold ? <strong>{line}</strong> : line}
                         {index < lines.length - 1 && '\n'}
                     </React.Fragment>
                 );
