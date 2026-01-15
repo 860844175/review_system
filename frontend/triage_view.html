@@ -3203,31 +3203,34 @@
                                                     )}
                                                 </div>
                                                 {/* 病史信息 */}
-                                                {(patient.meds && patient.meds.length > 0) || (patient.medical_history && (patient.medical_history.diagnoses_str || patient.medical_history.diagnoses)) || allergyList ? (
-                                                    <div className="mt-2 pt-2 border-t border-slate-100">
-                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
-                                                        <div className="text-xs text-slate-600 space-y-0.5">
-                                                            {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.diseases}</span>
-                                                                    <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、') || '无'}</span>
-                                                                </div>
-                                                            )}
-                                                            {patient.meds && patient.meds.length > 0 && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.currentMedications}</span>
-                                                                    <span>{patient.meds.join('、')}</span>
-                                                                </div>
-                                                            )}
-                                                            {allergyList && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.allergies}</span>
-                                                                    <span>{allergyList.join('、')}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                <div className="mt-2 pt-2 border-t border-slate-100">
+                                                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
+                                                    <div className="text-xs text-slate-600 space-y-0.5">
+                                                        {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) ? (
+                                                            <div>
+                                                                <span className="font-medium">{t.diseases}</span>
+                                                                <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、')}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <span className="font-medium">{t.diseases}</span>
+                                                                <span>无</span>
+                                                            </div>
+                                                        )}
+                                                        {patient.meds && patient.meds.length > 0 && (
+                                                            <div>
+                                                                <span className="font-medium">{t.currentMedications}</span>
+                                                                <span>{patient.meds.join('、')}</span>
+                                                            </div>
+                                                        )}
+                                                        {allergyList && allergyList.length > 0 && (
+                                                            <div>
+                                                                <span className="font-medium">{t.allergies}</span>
+                                                                <span>{allergyList.join('、')}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ) : null}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -3944,31 +3947,34 @@
                                                     )}
                                                 </div>
                                                 {/* 病史信息 */}
-                                                {(patient.meds && patient.meds.length > 0) || (patient.medical_history && (patient.medical_history.diagnoses_str || patient.medical_history.diagnoses)) || allergyList ? (
-                                                    <div className="mt-2 pt-2 border-t border-slate-100">
-                                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
-                                                        <div className="text-xs text-slate-600 space-y-0.5">
-                                                            {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.diseases}</span>
-                                                                    <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、') || '无'}</span>
-                                                                </div>
-                                                            )}
-                                                            {patient.meds && patient.meds.length > 0 && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.currentMedications}</span>
-                                                                    <span>{patient.meds.join('、')}</span>
-                                                                </div>
-                                                            )}
-                                                            {allergyList && (
-                                                                <div>
-                                                                    <span className="font-medium">{t.allergies}</span>
-                                                                    <span>{allergyList.join('、')}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                <div className="mt-2 pt-2 border-t border-slate-100">
+                                                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.medicalHistory}</div>
+                                                    <div className="text-xs text-slate-600 space-y-0.5">
+                                                        {patient.medical_history && (patient.medical_history.diagnoses_str || (patient.medical_history.diagnoses && patient.medical_history.diagnoses.length > 0)) ? (
+                                                            <div>
+                                                                <span className="font-medium">{t.diseases}</span>
+                                                                <span>{patient.medical_history.diagnoses_str || patient.medical_history.diagnoses.join('、')}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <span className="font-medium">{t.diseases}</span>
+                                                                <span>无</span>
+                                                            </div>
+                                                        )}
+                                                        {patient.meds && patient.meds.length > 0 && (
+                                                            <div>
+                                                                <span className="font-medium">{t.currentMedications}</span>
+                                                                <span>{patient.meds.join('、')}</span>
+                                                            </div>
+                                                        )}
+                                                        {allergyList && allergyList.length > 0 && (
+                                                            <div>
+                                                                <span className="font-medium">{t.allergies}</span>
+                                                                <span>{allergyList.join('、')}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ) : null}
+                                                </div>
                                             </div>
                                         </div>
 
