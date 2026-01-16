@@ -3238,7 +3238,7 @@
                                    'No obvious symptoms';
 
             // 提取触发方式
-            const triggerType = data?.scenario?.trigger_type || context?.trigger_type || 'unknown';
+            const triggerType = data?.scenario?.trigger_type || data?.trigger_context?.trigger_type || 'unknown';
             const triggerInfo = TRIGGER_TYPE_MAP[triggerType] || TRIGGER_TYPE_MAP['unknown'];
 
             // 智能匹配异常数值
