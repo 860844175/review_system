@@ -3602,60 +3602,6 @@
                                         </div>
                                     </div>
 
-                                                    <AITaskBlock
-                                                        title={t.patientRecommendations}
-                                                        targetPath={dataPaths.patient_recommendations || "bundle.data.suggestions.patient"}
-                                                        targetId={triageId}
-                                                        targetKind="triage_result"
-                                                        originalValue={recommendations.join('; ')}
-                                                        annotations={annotations}
-                                                        onAnnotationSave={handleAnnotationSave}
-                                                        onAnnotationDelete={handleAnnotationDelete}
-                                                    >
-                                                        {recommendations.length > 0 ? (
-                                                            <div>
-                                                                <div className="text-xs font-medium text-slate-600 mb-1">{t.recommendedAction}</div>
-                                                                <ol className="list-decimal list-inside space-y-1 marker:text-slate-400 marker:font-medium">
-                                                                    {recommendations.map((rec, idx) => (
-                                                                        <li key={idx} className="pl-0.5 text-xs">{rec}</li>
-                                                                    ))}
-                                                                </ol>
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-slate-400 text-xs">{t.noPatientRecommendations}</p>
-                                                        )}
-                                                    </AITaskBlock>
-
-                                                    {/* 医生建议（始终显示） */}
-                                                    <AITaskBlock
-                                                        title={t.doctorRecommendations}
-                                                        targetPath={dataPaths.doctor_recommendations || "bundle.data.suggestions.doctor"}
-                                                        targetId={triageId}
-                                                        targetKind="triage_result"
-                                                        originalValue={doctorRecommendations.join('; ')}
-                                                        annotations={annotations}
-                                                        onAnnotationSave={handleAnnotationSave}
-                                                        onAnnotationDelete={handleAnnotationDelete}
-                                                    >
-                                                        {doctorRecommendations.length > 0 ? (
-                                                            <div>
-                                                                <div className="text-xs font-medium text-slate-600 mb-1">{t.recommendedAction}</div>
-                                                                <ol className="list-decimal list-inside space-y-1 marker:text-slate-400 marker:font-medium">
-                                                                    {doctorRecommendations.map((rec, idx) => (
-                                                                        <li key={idx} className="pl-0.5 text-xs">{rec}</li>
-                                                                    ))}
-                                                                </ol>
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-slate-400 text-xs">{t.noDoctorRecommendations}</p>
-                                                        )}
-                                                    </AITaskBlock>
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     {/* 4. 医生审核区域 */}
                                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
                                         {/* 审核表单 */}
